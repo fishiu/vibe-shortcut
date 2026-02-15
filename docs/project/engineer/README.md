@@ -41,9 +41,18 @@ cp template.md task-1.2-dumper.md
 
 ## 🔍 已有日志 (Existing Logs)
 
+### 任务日志 (Task Logs)
+
 | 日志文件 | 任务 | 状态 | 日期 |
 |---------|------|------|------|
 | [task-1.2-1.3-shortcut-tool.md](./task-1.2-1.3-shortcut-tool.md) | 实现 decode/encode 工具，支持 AEA 格式 | 🟢 Completed | 2026-02-16 |
+| [task-1.4-signing-solution.md](./task-1.4-signing-solution.md) | 发现并使用官方签名工具，验证 iPhone 导入 | 🟢 Completed | 2026-02-16 |
+
+### 问题追踪 (Issue Tracking)
+
+| 问题文件 | 描述 | 状态 | 日期 |
+|---------|------|------|------|
+| [issue-unsigned-import-blocked.md](./issue-unsigned-import-blocked.md) | 未签名文件无法导入问题及解决方案 | ✅ Resolved | 2026-02-16 |
 
 ---
 
