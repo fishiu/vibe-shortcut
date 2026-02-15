@@ -1,0 +1,18 @@
+# VibeShortcut - Dependencies
+# Python 3.10+ required
+
+# === Core (Standard Library, no installation needed) ===
+# plistlib - Binary plist processing
+# uuid - UUID generation for Shortcut graph structure
+
+# === Development & Testing ===
+pytest>=7.4.0           # Unit testing framework
+pytest-cov>=4.1.0       # Test coverage reports
+
+# === Code Quality (Optional but Recommended) ===
+black>=23.0.0           # Code formatter
+mypy>=1.5.0             # Static type checker
+ruff>=0.1.0             # Fast linter (alternative to flake8)
+
+# === Utilities ===
+# All core functionality uses stdlib only to minimize dependencies
