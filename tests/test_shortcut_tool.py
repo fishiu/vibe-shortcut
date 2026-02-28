@@ -11,7 +11,7 @@ import sys
 # Add tools directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
 
-from shortcut_tool import decode, encode, verify_roundtrip
+from shortcut_tool import decode, encode, verify_roundtrip, dump_xml, load_xml, sign
 
 
 def test_encode_decode_simple(tmp_path):
@@ -82,6 +82,49 @@ def test_encode_creates_parent_dirs(tmp_path):
 
     assert nested_path.exists()
     assert decode(nested_path) == test_data
+
+
+def test_dump_xml_load_xml_roundtrip(tmp_path):
+    """Test dump_xml → load_xml is lossless."""
+    import datetime
+    test_data = {
+        "StringField": "hello",
+        "IntField": 42,
+        "BoolField": True,
+        "ListField": [1, "two", 3.0],
+        "NestedDict": {"inner": "value"},
+        "BytesField": b"\x89PNG\r\n\x1a\n",
+        "DateField": datetime.datetime(2026, 2, 16, 12, 0, 0),
+    }
+
+    xml_path = tmp_path / "test.xml"
+    dump_xml(test_data, xml_path)
+
+    assert xml_path.exists()
+    assert xml_path.read_bytes().startswith(b'<?xml')
+
+    reloaded = load_xml(xml_path)
+    assert reloaded == test_data
+
+
+def test_load_xml_nonexistent_file():
+    """Test load_xml raises FileNotFoundError for missing file."""
+    with pytest.raises(FileNotFoundError):
+        load_xml("nonexistent.xml")
+
+
+def test_dump_xml_creates_parent_dirs(tmp_path):
+    """Test dump_xml creates parent directories if needed."""
+    nested_path = tmp_path / "a" / "b" / "test.xml"
+    dump_xml({"key": "val"}, nested_path)
+    assert nested_path.exists()
+    assert load_xml(nested_path) == {"key": "val"}
+
+
+def test_sign_nonexistent_file():
+    """Test sign raises FileNotFoundError for missing file."""
+    with pytest.raises(FileNotFoundError):
+        sign("nonexistent.shortcut", "output.shortcut")
 
 
 if __name__ == "__main__":

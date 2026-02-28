@@ -20,7 +20,7 @@
 - [x] **Task 1.5 (Milestone)**: 确认二进制读写闭环无误。
   - decode → encode → sign → import to iPhone: 全链路验证通过 ✅
   - `verify_roundtrip()` 数据一致性: 通过 ✅
-  - 6 个单元测试全部通过 ✅
+  - 10 个单元测试全部通过 ✅
 
 ### 架构偏差说明
 原计划: 分离的 `tools/dumper.py` + `tools/builder.py`
@@ -51,36 +51,71 @@
 
 ### 已知问题 (Known Issues)
 * **macOS Only**: AEA 解包和签名功能仅在 macOS 上可用（依赖 compression_tool, aa, shortcuts 工具）
-* **sign() 未集成**: `shortcuts sign` 尚未封装到 shortcut_tool.py 中（Engineer 建议的后续改进）
 * **网络依赖**: `shortcuts sign` 可能需要联网访问 Apple 服务器
 
-### Phase 1 收尾任务 (进入 Phase 2 前完成)
+### Phase 1 收尾任务 (✅ 已完成)
 
 **Architect**:
-- [ ] **Task 1.6**: 更新 `doc3-spec.md` — 补充 Phase 1 实际 API 签名、XML Plist 中间格式决策、AEA 相关约束
+- [x] **Task 1.6**: 更新 `doc3-spec.md` — 补充实际项目结构、核心库、架构偏差说明
 
 **Engineer**:
-- [ ] **Task 1.7**: 给 `shortcut_tool.py` 补充三个函数：
+- [x] **Task 1.7**: 给 `shortcut_tool.py` 补充三个函数 + CLI 子命令：
   1. `dump_xml(data, path)` — Python dict → XML plist 文件
   2. `load_xml(path)` — XML plist 文件 → Python dict
   3. `sign(input, output)` — 封装 `shortcuts sign -m anyone`
+  - 额外产出: CLI `pipeline` 命令（decode→xml→build→sign 一键完成）
+  - 测试: 10/10 通过
 
 ---
 
-## 下一阶段: Phase 2 - Cleaner & Schema Definition (待开始)
-**目标**: 清洗原始 plist 数据，定义 AI 可读/可写的精简 XML Plist 格式。
+## 下一阶段: Phase 2 - 读懂 Shortcuts，产出编程手册 (待开始)
+**目标**: 逐步分析真实 shortcuts（从简单到复杂），理解其结构和 action 用法，沉淀为一份 AI/人类均可读的 Shortcuts 编程手册。
 
-### 已具备的前置能力
-- ✅ 读取任意 .shortcut 文件（含 AEA 签名）
-- ✅ 解析为 Python dict（完整数据结构）
-- ✅ 导出为 XML Plist（无损、人/AI 可读）
-- ✅ 生成可导入 iOS 的 .shortcut 文件
+### 核心思路
+- **纯分析，不改动** — 只读懂，不修改
+- **手册是过程产物** — 边分析边记录，不是先设计格式再填内容
+- **从具体到抽象** — 三个真实记账 shortcut 由简到难，逐步积累
+- **手册格式**: Markdown + XML 代码块，人能检查、AI 能消费（未来可拆为 skills）
 
-### 预期任务 (待 PM/Architect 细化)
-- [ ] **Task 2.1**: 实现 `tools/cleaner.py` — 移除 UI 坐标、metadata 等冗余数据，输入输出均为 XML Plist
-- [ ] **Task 2.2**: 分析多个不同类型 shortcuts 的数据结构，归纳共性
-- [ ] **Task 2.3**: 定义精简 XML Plist Schema — 明确哪些字段必须保留、哪些可以丢弃、哪些需要 AI 生成
-- [ ] **Task 2.4**: 验证 Schema：精简后的 XML Plist 能否重建出可工作的 shortcut
+### 样本计划
+| 样本 | 文件 | Actions | 独立类型 | 特点 | 状态 |
+|------|------|---------|----------|------|------|
+| Sample A | `samples/money/1-reg.shortcut` | 26 | ~8 种 | OCR + 正则匹配 | ✅ 已到位 |
+| Sample B | `samples/money/2-api.shortcut` | 46 | ~15 种 | OCR + DeepSeek API 解析 | ✅ 已到位 |
+| Sample C | `samples/money/3-full.shortcut` | 1140 | 44 种 | 完全体记账工具 | ✅ 已到位 |
 
-### Phase 2 后续预告
-* Phase 3: Builder — 从精简 XML Plist 描述生成完整的 .shortcut 文件（项目核心价值）
+**备注**: 三个样本均包含第三方 action `com.gostraight.smallAccountBook.*`（记账 App 的 SiriKit Intent）。
+
+### 任务清单
+**Round A — 简单样本 (OCR + 正则)**
+- [x] **Task 2.1**: 用户提供 Sample A 文件
+- [ ] **Task 2.2**: decode → dump_xml，列出完整 action 列表和数据流
+- [ ] **Task 2.3**: 逐个标注 action 的作用、参数含义、输入输出关系
+- [ ] **Task 2.4**: 产出手册 v0.1 — 覆盖 Sample A 涉及的 action 类型
+
+**Round B — 中等样本 (OCR + DeepSeek)**
+- [x] **Task 2.5**: 用户提供 Sample B 文件
+- [ ] **Task 2.6**: 分析新增的 action 类型（API 调用、JSON 解析等）
+- [ ] **Task 2.7**: 更新手册 v0.2 — 补充新 action，归纳共性模式
+
+**Round C — 复杂样本 (完全体)**
+- [x] **Task 2.8**: 用户提供 Sample C 文件
+- [ ] **Task 2.9**: 分析复杂控制流（条件、循环、变量传递、错误处理等）
+- [ ] **Task 2.10**: 更新手册 v0.3 — 补充高级模式，形成较完整的参考手册
+
+### Phase 2 Milestone
+**能用手册向一个不了解 shortcuts 内部格式的 AI 解释清楚这三个样本在做什么。**
+
+---
+
+## 后续阶段预告
+
+### Phase 3 - 改动 Shortcuts
+**目标**: 基于 Phase 2 的理解，实际修改现有 shortcut（如去掉 OCR 云服务依赖）。
+- 验证手册的实用性：AI 能否根据手册指导完成改动
+- encode → sign → iPhone 验证改动后可运行
+
+### Phase 4 - AI 生成 Shortcuts
+**目标**: AI 根据手册从零生成可工作的 shortcut。
+- 手册拆为 skills，按需加载
+- 端到端：自然语言 → AI 生成 XML plist → 工具链 → 可导入 iOS

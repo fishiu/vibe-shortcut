@@ -170,14 +170,86 @@ def verify_roundtrip(input_path: str | Path, output_path: str | Path) -> bool:
     return original_data == reencoded_data
 
 
+def dump_xml(data: Dict[str, Any], output_path: str | Path) -> None:
+    """
+    Dump Python dict to XML plist file (lossless intermediate format).
+
+    Args:
+        data: Dictionary containing shortcut data
+        output_path: Path where the XML plist file will be saved
+    """
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(path, 'wb') as f:
+        plistlib.dump(data, f, fmt=plistlib.FMT_XML)
+
+
+def load_xml(xml_path: str | Path) -> Dict[str, Any]:
+    """
+    Load XML plist file to Python dict.
+
+    Args:
+        xml_path: Path to the XML plist file
+
+    Returns:
+        Decoded plist data as Python dictionary
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        plistlib.InvalidFileException: If file is not a valid plist
+    """
+    path = Path(xml_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"XML plist file not found: {path}")
+
+    with open(path, 'rb') as f:
+        return plistlib.load(f)
+
+
+def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") -> None:
+    """
+    Sign a shortcut file using macOS official tool.
+
+    Args:
+        input_path: Path to the unsigned .shortcut file
+        output_path: Path for the signed .shortcut file
+        mode: Signing mode - "anyone" or "people-who-know-me"
+
+    Raises:
+        FileNotFoundError: If input file doesn't exist
+        RuntimeError: If signing fails
+    """
+    input_p = Path(input_path)
+    output_p = Path(output_path)
+
+    if not input_p.exists():
+        raise FileNotFoundError(f"Input file not found: {input_p}")
+
+    output_p.parent.mkdir(parents=True, exist_ok=True)
+
+    result = subprocess.run(
+        ['shortcuts', 'sign', '-m', mode, '-i', str(input_p), '-o', str(output_p)],
+        capture_output=True,
+        text=True
+    )
+
+    if not output_p.exists():
+        raise RuntimeError(f"Signing failed: {result.stderr}")
+
+
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print("Usage:")
-        print("  Decode: python shortcut_tool.py decode <input.shortcut>")
-        print("  Encode: python shortcut_tool.py encode <input.json> <output.shortcut>")
-        print("  Verify: python shortcut_tool.py verify <input.shortcut> <output.shortcut>")
+        print("  decode    <input.shortcut>                     Show top-level keys")
+        print("  dump-xml  <input.shortcut> <output.xml>        Export to XML plist")
+        print("  build     <input.xml> <output.shortcut>        Build from XML plist")
+        print("  sign      <input.shortcut> <output.shortcut>   Sign with Apple cert")
+        print("  verify    <input.shortcut> <output.shortcut>   Verify round-trip")
+        print("  pipeline  <input.shortcut> <output.shortcut>   Full: decode→xml→build→sign")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -188,13 +260,52 @@ if __name__ == "__main__":
         for key in data.keys():
             print(f"  - {key}")
 
+    elif command == "dump-xml":
+        data = decode(sys.argv[2])
+        dump_xml(data, sys.argv[3])
+        print(f"Exported to {sys.argv[3]}")
+
+    elif command == "build":
+        data = load_xml(sys.argv[2])
+        encode(data, sys.argv[3])
+        print(f"Built {sys.argv[3]}")
+
+    elif command == "sign":
+        sign(sys.argv[2], sys.argv[3])
+        print(f"Signed → {sys.argv[3]}")
+
     elif command == "verify":
         result = verify_roundtrip(sys.argv[2], sys.argv[3])
         if result:
-            print("✓ Round-trip verification PASSED - Lossless conversion confirmed")
+            print("✓ Round-trip verification PASSED")
         else:
-            print("✗ Round-trip verification FAILED - Data mismatch detected")
+            print("✗ Round-trip verification FAILED")
         sys.exit(0 if result else 1)
+
+    elif command == "pipeline":
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            xml_path = Path(tmp) / "intermediate.xml"
+            unsigned_path = Path(tmp) / "unsigned.shortcut"
+            # decode → xml → build → sign
+            data = decode(sys.argv[2])
+            dump_xml(data, xml_path)
+            rebuilt = load_xml(xml_path)
+            encode(rebuilt, unsigned_path)
+            sign(unsigned_path, sys.argv[3])
+            # verify (shortcuts sign may update WFWorkflowClientVersion)
+            final_data = decode(sys.argv[3])
+            diffs = {
+                k for k in set(list(data.keys()) + list(final_data.keys()))
+                if data.get(k) != final_data.get(k)
+            }
+            if not diffs:
+                print(f"✓ Pipeline complete → {sys.argv[3]} (lossless)")
+            elif diffs == {'WFWorkflowClientVersion'}:
+                print(f"✓ Pipeline complete → {sys.argv[3]} (sign tool updated WFWorkflowClientVersion)")
+            else:
+                print(f"✗ Pipeline complete → {sys.argv[3]} (unexpected diff: {diffs})")
+                sys.exit(1)
 
     else:
         print(f"Unknown command: {command}")

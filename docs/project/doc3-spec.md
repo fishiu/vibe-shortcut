@@ -79,10 +79,130 @@ vibe-shortcut/
 
 ---
 
-(待定 - 将在 Phase 1 实现后补充)
+## 2. Intermediate Format: XML Plist
 
-## 2. JSON Schema (Intermediate Representation)
-(待定)
+### 2.1 Design Decision
+**中间格式选择 XML Plist，而非 JSON。**
+
+| 维度 | JSON | XML Plist |
+|------|------|-----------|
+| datetime 类型 | ❌ 丢失（需自定义序列化） | ✅ 原生 `<date>` 标签 |
+| binary 类型 | ❌ 丢失（需 Base64 workaround） | ✅ 原生 `<data>` 标签 |
+| 与 .shortcut 的关系 | 需要额外转换层 | 同源格式，零损耗 |
+| plistlib 支持 | 需额外 json.dumps | `FMT_XML` 一行切换 |
+| 人类可读 | ✅ | ✅ |
+| AI 可读/可写 | ✅ | ✅ |
+
+### 2.2 Data Pipeline
+```
+[Input]  .shortcut (AEA signed, binary)
+    ↓ decode()          — AEA 解包 + plist 反序列化
+[Memory] Python dict     — 内存中的完整数据结构
+    ↓ dump_xml()        — plistlib.dump(FMT_XML)
+[Disk]   .xml            — 无损中间层，人/AI 可读写
+    ↓ (编辑 / 清洗 / AI 生成)
+    ↓ load_xml()        — plistlib.load()
+[Memory] Python dict
+    ↓ encode()          — plistlib.dump(FMT_BINARY)
+[Disk]   .shortcut       — 未签名 binary plist
+    ↓ sign()            — shortcuts sign -m anyone
+[Output] .shortcut       — AEA 签名，可导入 iOS
+```
+
+### 2.3 XML Plist Schema (Phase 2 待定义)
+Phase 2 将定义"精简 XML Plist Schema"：
+- 哪些字段 **必须保留**（功能性字段：Actions, Input/Output）
+- 哪些字段 **可以丢弃**（UI 坐标、编辑器 metadata）
+- 哪些字段 **需要 Builder 自动生成**（UUID、版本号、Icon 默认值）
+
+---
 
 ## 3. API Signatures
-(待定)
+
+### 3.1 Module: `tools/shortcut_tool.py`
+
+#### 已实现 (Phase 1)
+
+```python
+def decode(shortcut_path: str | Path) -> Dict[str, Any]
+```
+- 将 `.shortcut` 文件解码为 Python dict
+- 自动检测 AEA 签名 / 纯 plist 两种格式
+- **Raises**: `FileNotFoundError`, `plistlib.InvalidFileException`, `ValueError`
+
+```python
+def encode(data: Dict[str, Any], output_path: str | Path) -> None
+```
+- 将 Python dict 编码为 binary plist (`.shortcut`)
+- 自动创建父目录
+- **输出格式**: `plistlib.FMT_BINARY`
+
+```python
+def verify_roundtrip(input_path: str | Path, output_path: str | Path) -> bool
+```
+- 验证 decode → encode 无损性
+- 返回 `True` 表示数据一致
+
+#### 内部函数
+
+```python
+def _extract_from_aea(aea_data: bytes) -> bytes
+```
+- 从 AEA 签名容器中提取 plist 数据
+- 依赖 macOS 工具: `compression_tool` (LZFSE 解压), `aa` (Apple Archive 解包)
+
+#### Task 1.7 新增
+
+```python
+def dump_xml(data: Dict[str, Any], output_path: str | Path) -> None
+```
+- Python dict → XML plist 文件
+- **输出格式**: `plistlib.FMT_XML`
+- 自动创建父目录
+
+```python
+def load_xml(xml_path: str | Path) -> Dict[str, Any]
+```
+- XML plist 文件 → Python dict
+- **Raises**: `FileNotFoundError`, `plistlib.InvalidFileException`
+
+```python
+def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") -> None
+```
+- 封装 `shortcuts sign -m <mode> -i <input> -o <output>`
+- `mode`: `"anyone"` (默认) 或 `"people-who-know-me"`
+- **Raises**: `FileNotFoundError`, `RuntimeError`
+- **约束**: 仅 macOS 可用，可能需要联网
+
+#### CLI 命令 (`python shortcut_tool.py <command>`)
+
+| 命令 | 用法 | 说明 |
+|------|------|------|
+| `decode` | `decode <input.shortcut>` | 显示顶层 keys |
+| `dump-xml` | `dump-xml <input.shortcut> <output.xml>` | 导出 XML plist |
+| `build` | `build <input.xml> <output.shortcut>` | 从 XML 构建 |
+| `sign` | `sign <input> <output>` | Apple 签名 |
+| `verify` | `verify <input> <output>` | 验证无损 |
+| `pipeline` | `pipeline <input> <output>` | 全链路: decode→xml→build→sign |
+
+---
+
+## 4. Platform Constraints
+
+### 4.1 AEA (Apple Encrypted Archive)
+- iOS 15+ 的 `.shortcut` 文件使用 AEA 签名容器
+- 内部结构: `AEA1 header → LZFSE 压缩 → Apple Archive → Shortcut.wflow (plist)`
+- 文件大小: 未签名 ~1.3KB vs 签名后 ~22KB（证书链占主要体积）
+
+### 4.2 macOS 系统工具依赖
+| 工具 | 用途 | 路径 |
+|------|------|------|
+| `compression_tool` | LZFSE 解压缩 | 系统自带 |
+| `aa` | Apple Archive 解包 | 系统自带 |
+| `shortcuts` | 官方签名工具 | `/usr/bin/shortcuts` |
+
+### 4.3 签名约束
+- iOS **强制要求** AEA 签名，未签名文件无法导入
+- macOS 对自签名文件会闪退
+- `shortcuts sign -m anyone` 使用用户的 Apple ID 证书链
+- 签名过程**可能需要联网**访问 Apple 服务器

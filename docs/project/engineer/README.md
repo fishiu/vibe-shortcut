@@ -47,6 +47,7 @@ cp template.md task-1.2-dumper.md
 |---------|------|------|------|
 | [task-1.2-1.3-shortcut-tool.md](./task-1.2-1.3-shortcut-tool.md) | 实现 decode/encode 工具，支持 AEA 格式 | 🟢 Completed | 2026-02-16 |
 | [task-1.4-signing-solution.md](./task-1.4-signing-solution.md) | 发现并使用官方签名工具，验证 iPhone 导入 | 🟢 Completed | 2026-02-16 |
+| [task-1.7-xml-sign.md](./task-1.7-xml-sign.md) | 补充 dump_xml / load_xml / sign 函数 | 🟢 Completed | 2026-02-26 |
 
 ### 问题追踪 (Issue Tracking)
 
