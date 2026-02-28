@@ -68,7 +68,7 @@
 
 ---
 
-## 下一阶段: Phase 2 - 读懂 Shortcuts，产出编程手册 (待开始)
+## Phase 2 - 读懂 Shortcuts，产出编程手册 (✅ 已完成)
 **目标**: 逐步分析真实 shortcuts（从简单到复杂），理解其结构和 action 用法，沉淀为一份 AI/人类均可读的 Shortcuts 编程手册。
 
 ### 核心思路
@@ -80,31 +80,43 @@
 ### 样本计划
 | 样本 | 文件 | Actions | 独立类型 | 特点 | 状态 |
 |------|------|---------|----------|------|------|
-| Sample A | `samples/money/1-reg.shortcut` | 26 | ~8 种 | OCR + 正则匹配 | ✅ 已到位 |
-| Sample B | `samples/money/2-api.shortcut` | 46 | ~15 种 | OCR + DeepSeek API 解析 | ✅ 已到位 |
-| Sample C | `samples/money/3-full.shortcut` | 1140 | 44 种 | 完全体记账工具 | ✅ 已到位 |
-
-**备注**: 三个样本均包含第三方 action `com.gostraight.smallAccountBook.*`（记账 App 的 SiriKit Intent）。
+| Sample A | `samples/money/1-reg.shortcut` | 26 | ~8 种 | OCR + 正则匹配 | ✅ 分析完成 |
+| Sample B | `samples/money/2-api.shortcut` | 46 | ~15 种 | OCR + DeepSeek API 解析 | ✅ 分析完成 |
+| Sample C | `samples/money/3-full.shortcut` | 1140 | 44 种 | 完全体记账工具 | ✅ 分析完成 |
 
 ### 任务清单
 **Round A — 简单样本 (OCR + 正则)**
 - [x] **Task 2.1**: 用户提供 Sample A 文件
-- [ ] **Task 2.2**: decode → dump_xml，列出完整 action 列表和数据流
-- [ ] **Task 2.3**: 逐个标注 action 的作用、参数含义、输入输出关系
-- [ ] **Task 2.4**: 产出手册 v0.1 — 覆盖 Sample A 涉及的 action 类型
+- [x] **Task 2.2**: decode → dump_xml，列出完整 action 列表和数据流
+- [x] **Task 2.3**: 逐个标注 action 的作用、参数含义、输入输出关系
+- [x] **Task 2.4**: 产出手册 v0.1 — 覆盖 11 种 action 类型 (869 行)
 
 **Round B — 中等样本 (OCR + DeepSeek)**
 - [x] **Task 2.5**: 用户提供 Sample B 文件
-- [ ] **Task 2.6**: 分析新增的 action 类型（API 调用、JSON 解析等）
-- [ ] **Task 2.7**: 更新手册 v0.2 — 补充新 action，归纳共性模式
+- [x] **Task 2.6**: 分析 7 种新增 action 类型（dictionary, downloadurl, detect.dictionary 等）
+- [x] **Task 2.7**: 产出手册 v0.2 — 24 种 action，6 种常用模式 (1226 行)
 
 **Round C — 复杂样本 (完全体)**
 - [x] **Task 2.8**: 用户提供 Sample C 文件
-- [ ] **Task 2.9**: 分析复杂控制流（条件、循环、变量传递、错误处理等）
-- [ ] **Task 2.10**: 更新手册 v0.3 — 补充高级模式，形成较完整的参考手册
+- [x] **Task 2.9**: 分析 22 种新增 action（循环、数学运算、图片处理等）
+- [x] **Task 2.10**: 产出手册 v0.3 — 46 种 action，9 种常用模式 (1914 行)
 
-### Phase 2 Milestone
+### Phase 2 Milestone ✅ 达成
 **能用手册向一个不了解 shortcuts 内部格式的 AI 解释清楚这三个样本在做什么。**
+
+### 手册迭代记录
+| 版本 | 文件 | Action 类型 | 常用模式 | 行数 |
+|------|------|:-----------:|:--------:|:----:|
+| v0.1 | `docs/shortcuts-manual-v0.1.md` | 11 | 3 | 869 |
+| v0.2 | `docs/shortcuts-manual-v0.2.md` | 24 | 6 | 1226 |
+| **v0.3** | **`docs/shortcuts-manual-v0.3.md`** | **46** | **9** | **1914** |
+
+### Phase 2 关键技术发现
+1. **四种序列化类型**: WFTextTokenAttachment, WFTextTokenString, WFDictionaryFieldValue, WFContentPredicateTableTemplate
+2. **四种控制流结构**: conditional, choosefrommenu, repeat.count, repeat.each — 共用 GroupingIdentifier + WFControlFlowMode 模式
+3. **WFCondition=100**: "Has Any Value"，用于检查变量是否非空
+4. **WFItemType 无 2**: 已知值为 0(Text), 1(Dict), 3(Number), 4(Bool), 5(Array)
+5. **第三方 Action**: 通过 AppIntentDescriptor 声明 App 信息，参数名由 App 定义
 
 ---
 

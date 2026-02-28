@@ -121,48 +121,18 @@ Phase 2 的核心产出是 `docs/shortcuts-manual-v{version}.md`，记录了 Sho
 - Action 参数参考（含完整 XML 代码示例）
 - 可复用的编程模式
 
-手册按 Round A/B/C 增量更新，版本号对应覆盖范围：
+手册版本历程：
 - **v0.1**: 11 种 action (Sample A: OCR + 正则) ✅
 - **v0.2**: 24 种 action (+ Sample B: API 调用) ✅
-- **v0.3**: 预计 ~44 种 action (+ Sample C: 完全体)
+- **v0.3**: 46 种 action (+ Sample C: 完全体, 1914 行) ✅ **← 当前版本**
 
-### 2.4 已验证项 (Architect Review 结论)
-- ✅ `WFCondition=0` 确认为"等于" (Round B 交叉验证)
-- ✅ **conditional 分支方向已确认**: BEGIN→ELSE 之间是 **true 分支**，ELSE→END 之间是 **false 分支**
-- ⚠️ `WFCondition=4` (≥) 仍仅 Round A 一个样本，Round C 继续观察
-
-### 2.5 Architect 指导: Round C 注意事项
-
-> **以下内容是给 Round C Engineer 的指导，执行前请阅读。**
-
-#### 2.5.1 Sample C 规模预警
-Sample C 有 **1140 actions, 44 种 action 类型**，比 Sample B 多 ~20 种新 action。不要试图用单个分析文档覆盖全部 1140 actions 的执行顺序表——按业务模块分段分析即可。
-
-#### 2.5.2 预期新增的 action 类型
-根据"完全体记账工具"的功能推测，Round C 可能遇到：
-- **循环**: `repeat` / `repeat.each` — WFControlFlowMode 的第三种应用场景，记录其与 conditional/menu 的结构差异
-- **数学运算**: `math` — 关注 WFMathOperation 参数的可选值
-- **日期处理**: `date`, `format.date`, `adjustdate`
-- **文本操作**: `text.split`, `text.combine`, `gettype`
-- **错误处理**: 如果存在 try/catch 机制，这是架构上的重要发现
-
-#### 2.5.3 需要验证的遗留项
-- `WFCondition=4` 的含义（Round A 标注为 ≥，但只有一个样本）— 如果 Sample C 中有使用 WFCondition=4 的场景，请用业务逻辑反推验证
-- `WFItemType` 的其他值 — Round B 仅观察到 `0=Text`，Sample C 可能有更多类型
-
-#### 2.5.4 手册结构建议
-v0.3 预计 2000+ 行。Round C 期间保持单文件 `shortcuts-manual-v0.3.md`。如果最终超过 2500 行，Architect 会在 Phase 3 开始前将其拆分为：
-```
-docs/
-├── shortcuts-manual.md              # 核心概念 (文件结构、值传递、控制流、模式、生成清单)
-└── shortcuts-actions/               # Action 参考（按类别拆分）
-    ├── data-processing.md
-    ├── network.md
-    ├── interaction.md
-    ├── control-flow.md
-    └── third-party.md
-```
-**Round C Engineer 不需要做拆分**，正常写 v0.3 单文件即可。
+### 2.4 技术验证结论 (Phase 2 完成)
+- ✅ `WFCondition` 运算符表完整: 0=等于, 1=不等于, 2=小于, 3=大于, 4=大于等于, 5=小于等于, 100=有任何值
+- ✅ **conditional 分支方向**: BEGIN→ELSE = true 分支, ELSE→END = false 分支
+- ✅ `WFCondition=4` 确认为 ≥ (Sample C 中出现 82 次)
+- ✅ `WFItemType`: 0=Text, 1=Dictionary, 3=Number, 4=Boolean, 5=Array (无 2)
+- ✅ 4 种序列化类型: WFTextTokenAttachment, WFTextTokenString, WFDictionaryFieldValue, WFContentPredicateTableTemplate
+- ✅ 4 种控制流: conditional, choosefrommenu, repeat.count, repeat.each
 
 ---
 

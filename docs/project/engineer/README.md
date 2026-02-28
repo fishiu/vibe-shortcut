@@ -53,6 +53,8 @@ cp template.md task-1.2-dumper.md
 | [task-2.4-manual-v0.1.md](./task-2.4-manual-v0.1.md) | 产出 Shortcuts 编程手册 v0.1 | 🟢 Completed | 2026-02-28 |
 | [task-2.6-sample-b-analysis.md](./task-2.6-sample-b-analysis.md) | Sample B 分析: API 调用 + JSON 解析 | 🟢 Completed | 2026-02-28 |
 | [task-2.7-manual-v0.2.md](./task-2.7-manual-v0.2.md) | 更新手册 v0.2: 新增 12 种 action + 3 种模式 | 🟢 Completed | 2026-02-28 |
+| [task-2.9-sample-c-analysis.md](./task-2.9-sample-c-analysis.md) | Sample C 分析: 1140 actions, 22 种新 action, 循环/过滤/表达式 | 🟢 Completed | 2026-02-28 |
+| [task-2.10-manual-v0.3.md](./task-2.10-manual-v0.3.md) | 更新手册 v0.3: 46 种 action + 9 种模式 (1914 行) | 🟢 Completed | 2026-02-28 |
 
 ### 问题追踪 (Issue Tracking)
 
