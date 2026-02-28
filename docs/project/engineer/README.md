@@ -48,6 +48,11 @@ cp template.md task-1.2-dumper.md
 | [task-1.2-1.3-shortcut-tool.md](./task-1.2-1.3-shortcut-tool.md) | 实现 decode/encode 工具，支持 AEA 格式 | 🟢 Completed | 2026-02-16 |
 | [task-1.4-signing-solution.md](./task-1.4-signing-solution.md) | 发现并使用官方签名工具，验证 iPhone 导入 | 🟢 Completed | 2026-02-16 |
 | [task-1.7-xml-sign.md](./task-1.7-xml-sign.md) | 补充 dump_xml / load_xml / sign 函数 | 🟢 Completed | 2026-02-26 |
+| [task-2.2-sample-a-analysis.md](./task-2.2-sample-a-analysis.md) | Sample A 结构分析: action 列表 + 数据流 | 🟢 Completed | 2026-02-28 |
+| [task-2.3-sample-a-actions.md](./task-2.3-sample-a-actions.md) | Sample A 每种 action 参数详解 | 🟢 Completed | 2026-02-28 |
+| [task-2.4-manual-v0.1.md](./task-2.4-manual-v0.1.md) | 产出 Shortcuts 编程手册 v0.1 | 🟢 Completed | 2026-02-28 |
+| [task-2.6-sample-b-analysis.md](./task-2.6-sample-b-analysis.md) | Sample B 分析: API 调用 + JSON 解析 | 🟢 Completed | 2026-02-28 |
+| [task-2.7-manual-v0.2.md](./task-2.7-manual-v0.2.md) | 更新手册 v0.2: 新增 12 种 action + 3 种模式 | 🟢 Completed | 2026-02-28 |
 
 ### 问题追踪 (Issue Tracking)
 

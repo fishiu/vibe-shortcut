@@ -62,8 +62,14 @@ vibe-shortcut/
 │   ├── test_shortcut_tool.py            # shortcut_tool 单元测试
 │   └── test_aea_extraction.py           # AEA 解包测试
 ├── samples/
-│   ├── demo-notification.shortcut       # 参考文件 (AEA 签名, 22KB)
-│   └── official-signed.shortcut         # 工具链产出的签名文件
+│   ├── demo-notification.shortcut       # Phase 1 参考文件 (AEA 签名, 22KB)
+│   └── money/                           # Phase 2 记账 shortcut 样本
+│       ├── 1-reg.shortcut               # Sample A: OCR + 正则 (26 actions)
+│       ├── 1-reg.xml                    # Sample A XML 导出
+│       ├── 2-api.shortcut               # Sample B: OCR + DeepSeek API (46 actions)
+│       └── 3-full.shortcut              # Sample C: 完全体 (1140 actions)
+├── docs/
+│   └── shortcuts-manual-v0.1.md         # Shortcuts 编程手册 (Phase 2 产出)
 ├── requirements.txt                     # Python 依赖
 └── .gitignore
 ```
@@ -109,11 +115,54 @@ vibe-shortcut/
 [Output] .shortcut       — AEA 签名，可导入 iOS
 ```
 
-### 2.3 XML Plist Schema (Phase 2 待定义)
-Phase 2 将定义"精简 XML Plist Schema"：
-- 哪些字段 **必须保留**（功能性字段：Actions, Input/Output）
-- 哪些字段 **可以丢弃**（UI 坐标、编辑器 metadata）
-- 哪些字段 **需要 Builder 自动生成**（UUID、版本号、Icon 默认值）
+### 2.3 Shortcuts 编程手册
+Phase 2 的核心产出是 `docs/shortcuts-manual-v{version}.md`，记录了 Shortcuts XML Plist 的完整格式规范：
+- 文件结构、值传递机制、控制流
+- Action 参数参考（含完整 XML 代码示例）
+- 可复用的编程模式
+
+手册按 Round A/B/C 增量更新，版本号对应覆盖范围：
+- **v0.1**: 11 种 action (Sample A: OCR + 正则) ✅
+- **v0.2**: 24 种 action (+ Sample B: API 调用) ✅
+- **v0.3**: 预计 ~44 种 action (+ Sample C: 完全体)
+
+### 2.4 已验证项 (Architect Review 结论)
+- ✅ `WFCondition=0` 确认为"等于" (Round B 交叉验证)
+- ✅ **conditional 分支方向已确认**: BEGIN→ELSE 之间是 **true 分支**，ELSE→END 之间是 **false 分支**
+- ⚠️ `WFCondition=4` (≥) 仍仅 Round A 一个样本，Round C 继续观察
+
+### 2.5 Architect 指导: Round C 注意事项
+
+> **以下内容是给 Round C Engineer 的指导，执行前请阅读。**
+
+#### 2.5.1 Sample C 规模预警
+Sample C 有 **1140 actions, 44 种 action 类型**，比 Sample B 多 ~20 种新 action。不要试图用单个分析文档覆盖全部 1140 actions 的执行顺序表——按业务模块分段分析即可。
+
+#### 2.5.2 预期新增的 action 类型
+根据"完全体记账工具"的功能推测，Round C 可能遇到：
+- **循环**: `repeat` / `repeat.each` — WFControlFlowMode 的第三种应用场景，记录其与 conditional/menu 的结构差异
+- **数学运算**: `math` — 关注 WFMathOperation 参数的可选值
+- **日期处理**: `date`, `format.date`, `adjustdate`
+- **文本操作**: `text.split`, `text.combine`, `gettype`
+- **错误处理**: 如果存在 try/catch 机制，这是架构上的重要发现
+
+#### 2.5.3 需要验证的遗留项
+- `WFCondition=4` 的含义（Round A 标注为 ≥，但只有一个样本）— 如果 Sample C 中有使用 WFCondition=4 的场景，请用业务逻辑反推验证
+- `WFItemType` 的其他值 — Round B 仅观察到 `0=Text`，Sample C 可能有更多类型
+
+#### 2.5.4 手册结构建议
+v0.3 预计 2000+ 行。Round C 期间保持单文件 `shortcuts-manual-v0.3.md`。如果最终超过 2500 行，Architect 会在 Phase 3 开始前将其拆分为：
+```
+docs/
+├── shortcuts-manual.md              # 核心概念 (文件结构、值传递、控制流、模式、生成清单)
+└── shortcuts-actions/               # Action 参考（按类别拆分）
+    ├── data-processing.md
+    ├── network.md
+    ├── interaction.md
+    ├── control-flow.md
+    └── third-party.md
+```
+**Round C Engineer 不需要做拆分**，正常写 v0.3 单文件即可。
 
 ---
 
