@@ -129,8 +129,9 @@
 | 子任务 | 目标 | 状态 |
 |--------|------|------|
 | **3A** 本地 OCR | 截图 → OCR → 通知输出 | ✅ 完成 |
-| **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ⏳ 待开始 |
-| **3C** iCost 操作 | 理解并复刻 3-full 的 iCost 部分 | ⏳ 待开始 |
+| **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ✅ 完成 |
+| **3C-1** OCR+DeepSeek 合体 | 截图 → OCR → DeepSeek JSON → 通知 | 🔜 进行中 |
+| **3C-2** iCost 打通 | JSON 结果 → iCost 记账 | ⏳ 待开始 |
 
 ---
 
@@ -177,18 +178,89 @@
 #### 任务清单
 
 **Architect**:
-- [ ] **Task 3.4**: 设计 DeepSeek shortcut 的完整 XML 骨架
-  - Action 链路与 UUID 引用关系
-  - Import Questions 配置结构（api_key + base_url）
-  - 请求体 JSON 构建方式
-  - 产出：写入 `doc3-spec.md` §6
+- [x] **Task 3.4**: 设计 DeepSeek shortcut 的完整 XML 骨架
+  - 产出：`doc3-spec.md §6`，8 action 链路 + UUID 引用关系 + 字符位置计算 ✅
 
 **Engineer**:
-- [ ] **Task 3.5**: 按规范手写 XML plist
-  - 产出：`samples/deepseek/deepseek.xml`
-- [ ] **Task 3.6**: build → sign → iPhone 验证
-  - 产出：`samples/deepseek/deepseek.shortcut`
-  - 验证：iPhone 输入文本，通知显示 DeepSeek 回复
+- [x] **Task 3.5**: 按规范手写 XML plist
+  - 产出：`samples/deepseek-api/deepseek-api.xml`（13.5KB，8 action）✅
+- [x] **Task 3.6**: build → sign → iPhone 验证
+  - 产出：`samples/deepseek-api/deepseek-api.shortcut`（AEA 签名，23KB）✅
+  - 验证：iPhone 输入文本，通知显示 DeepSeek 回复 ✅
+  - 安全提醒：XML 含 API Key 占位符，替换真实 key 后勿 commit；`*.shortcut` 已在 `.gitignore`
+
+---
+
+---
+
+### 3C-1 — OCR + DeepSeek 合体（截图记账 JSON）
+
+**目标**: 将 3A、3B 合并为单一 shortcut，截图后自动 OCR 并调用 DeepSeek 输出记账 JSON，通知显示结果。
+
+**流程**:
+```
+takescreenshot → extracttextfromimage → text(拼接 prompt + OCR 结果)
+  → downloadurl(DeepSeek POST) → 解析 choices[0].message.content → notification
+```
+
+**与 3B 的关键差异**:
+- 去掉 `ask` action，改用 OCR 输出作为 DeepSeek 输入
+- 请求体中加入 system prompt，要求输出记账 JSON
+
+**DeepSeek Prompt**:
+```
+你是记账助手。从以下文字中提取记账信息，只返回 JSON，不输出任何其他内容：
+{"item": "商品名称", "amount": 金额数字}
+如果有多笔，返回数组：[{"item": "...", "amount": ...}, ...]
+无法识别时返回：{"item": "未知", "amount": 0}
+
+文字内容：
+```
+
+**Done 定义**: iPhone 截图后，通知显示 `{"item": "xxx", "amount": 0.00}` 格式的 JSON。
+
+**参考**: `doc3-spec.md §5`（OCR 链路）、`§6`（DeepSeek 链路）
+
+#### 任务清单
+
+**Architect**:
+- [ ] **Task 3.7**: 设计合体 shortcut 的 XML 骨架
+  - OCR 输出如何作为 DeepSeek user message content 嵌入（WFTextTokenString 拼接）
+  - system message 与 user message 的 JSON 请求体结构
+  - UUID 引用链（takescreenshot → OCR → text → downloadurl → 解析链 → notification）
+  - 产出：`doc3-spec.md §7`
+
+**Engineer**:
+- [ ] **Task 3.8**: 按规范手写 XML plist
+  - 产出：`samples/ocr-deepseek/ocr-deepseek.xml`
+- [ ] **Task 3.9**: build → sign → iPhone 验证
+  - 产出：`samples/ocr-deepseek/ocr-deepseek.shortcut`
+  - 验证：截图后通知显示记账 JSON
+
+---
+
+---
+
+### 3C-2 — 替换 3-full 的 icost.vip 请求
+
+**目标**: 在 `3-full.xml` 中外科手术式替换 `icost.vip/wapi/v1/chat` 调用为 DeepSeek，保持下游逻辑不变。
+
+**核心策略**: prompt 让 DeepSeek 返回与 icost.vip `detail` 字段完全相同的 JSON 结构，下游 `getvalueforkey` 链路无需改动。
+
+**Done 定义**: 修改后的 3-full 导入 iPhone，记账流程正常运行。
+
+#### 任务清单
+
+**Architect**:
+- [ ] **Task 3.10**: 分析 `3-full.xml` 中 icost.vip/chat 的接口
+  - 请求体结构（发了什么进去）
+  - `detail` 字段的 JSON 结构（下游取了哪些 key）
+  - 设计 DeepSeek 替换方案：URL + 请求体 + prompt（让 DeepSeek 返回相同 detail 结构）
+  - 产出：`doc3-spec.md §8`
+
+**Engineer**:
+- [ ] **Task 3.11**: 在 `3-full.xml` 中做外科替换，build → sign → iPhone 验证
+  - 产出：`samples/money/3-full-deepseek.xml` + 对应 `.shortcut`
 
 ---
 
