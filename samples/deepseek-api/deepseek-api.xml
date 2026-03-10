@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>WFWorkflowActions</key>
+    <array>
+
+        <!-- Action 1: API Key -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.gettext</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>779A5B1A-29A9-42FF-BADA-70143092EA91</string>
+                <key>WFTextActionText</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>string</key>
+                        <string>sk-REPLACE-WITH-REAL-KEY</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenString</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Action 2: 用户输入 -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.ask</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>3BF2C20A-2929-412C-8729-259A3392815F</string>
+                <key>WFAskActionPrompt</key>
+                <string>Ask DeepSeek:</string>
+                <key>WFInputType</key>
+                <string>Text</string>
+            </dict>
+        </dict>
+
+        <!-- Action 3: 构建 JSON 请求体 -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.gettext</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>B4A11CAB-48B0-4D7E-B8D9-51FD11CF1B94</string>
+                <key>WFTextActionText</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>attachmentsByRange</key>
+                        <dict>
+                            <key>{63, 1}</key>
+                            <dict>
+                                <key>OutputName</key>
+                                <string>Provided Input</string>
+                                <key>OutputUUID</key>
+                                <string>3BF2C20A-2929-412C-8729-259A3392815F</string>
+                                <key>Type</key>
+                                <string>ActionOutput</string>
+                            </dict>
+                        </dict>
+                        <key>string</key>
+                        <string>{"model":"deepseek-chat","messages":[{"role":"user","content":"&#xFFFC;"}]}</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenString</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Action 4: POST 到 DeepSeek API -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.downloadurl</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>E9F4CFA7-63BA-4E63-ADBC-769C27116766</string>
+                <key>ShowHeaders</key>
+                <true/>
+                <key>WFHTTPMethod</key>
+                <string>POST</string>
+                <key>WFHTTPBodyType</key>
+                <string>File</string>
+                <key>WFURL</key>
+                <string>https://api.deepseek.com/v1/chat/completions</string>
+                <key>WFHTTPHeaders</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>WFDictionaryFieldValueItems</key>
+                        <array>
+                            <dict>
+                                <key>WFItemType</key>
+                                <integer>0</integer>
+                                <key>WFKey</key>
+                                <dict>
+                                    <key>Value</key>
+                                    <dict>
+                                        <key>string</key>
+                                        <string>Authorization</string>
+                                    </dict>
+                                    <key>WFSerializationType</key>
+                                    <string>WFTextTokenString</string>
+                                </dict>
+                                <key>WFValue</key>
+                                <dict>
+                                    <key>Value</key>
+                                    <dict>
+                                        <key>attachmentsByRange</key>
+                                        <dict>
+                                            <key>{7, 1}</key>
+                                            <dict>
+                                                <key>OutputName</key>
+                                                <string>Text</string>
+                                                <key>OutputUUID</key>
+                                                <string>779A5B1A-29A9-42FF-BADA-70143092EA91</string>
+                                                <key>Type</key>
+                                                <string>ActionOutput</string>
+                                            </dict>
+                                        </dict>
+                                        <key>string</key>
+                                        <string>Bearer &#xFFFC;</string>
+                                    </dict>
+                                    <key>WFSerializationType</key>
+                                    <string>WFTextTokenString</string>
+                                </dict>
+                            </dict>
+                            <dict>
+                                <key>WFItemType</key>
+                                <integer>0</integer>
+                                <key>WFKey</key>
+                                <dict>
+                                    <key>Value</key>
+                                    <dict>
+                                        <key>string</key>
+                                        <string>Content-Type</string>
+                                    </dict>
+                                    <key>WFSerializationType</key>
+                                    <string>WFTextTokenString</string>
+                                </dict>
+                                <key>WFValue</key>
+                                <dict>
+                                    <key>Value</key>
+                                    <dict>
+                                        <key>string</key>
+                                        <string>application/json</string>
+                                    </dict>
+                                    <key>WFSerializationType</key>
+                                    <string>WFTextTokenString</string>
+                                </dict>
+                            </dict>
+                        </array>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFDictionaryFieldValue</string>
+                </dict>
+                <key>WFRequestVariable</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>OutputName</key>
+                        <string>Text</string>
+                        <key>OutputUUID</key>
+                        <string>B4A11CAB-48B0-4D7E-B8D9-51FD11CF1B94</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenAttachment</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Action 5: 提取 choices 数组 -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.getvalueforkey</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>00736E38-0762-4F41-8A0C-CA3D8B95A8D0</string>
+                <key>WFDictionaryKey</key>
+                <string>choices</string>
+                <key>WFInput</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>OutputName</key>
+                        <string>Contents of URL</string>
+                        <key>OutputUUID</key>
+                        <string>E9F4CFA7-63BA-4E63-ADBC-769C27116766</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenAttachment</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Action 6: 取第一项 choices[0] -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.getitemfromlist</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>8B809760-33C7-4CF9-A426-A8DD683A52D8</string>
+                <key>WFInput</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>OutputName</key>
+                        <string>Value for Key</string>
+                        <key>OutputUUID</key>
+                        <string>00736E38-0762-4F41-8A0C-CA3D8B95A8D0</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenAttachment</string>
+                </dict>
+                <key>WFItemIndex</key>
+                <integer>1</integer>
+            </dict>
+        </dict>
+
+        <!-- Action 7: 提取 message.content -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.getvalueforkey</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>UUID</key>
+                <string>517A3557-0C2C-4CC8-BC32-44A9D4511E86</string>
+                <key>WFDictionaryKey</key>
+                <string>message.content</string>
+                <key>WFInput</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>OutputName</key>
+                        <string>Item from List</string>
+                        <key>OutputUUID</key>
+                        <string>8B809760-33C7-4CF9-A426-A8DD683A52D8</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenAttachment</string>
+                </dict>
+            </dict>
+        </dict>
+
+        <!-- Action 8: 通知显示 AI 回答 -->
+        <dict>
+            <key>WFWorkflowActionIdentifier</key>
+            <string>is.workflow.actions.notification</string>
+            <key>WFWorkflowActionParameters</key>
+            <dict>
+                <key>WFNotificationActionTitle</key>
+                <string>DeepSeek</string>
+                <key>WFNotificationActionBody</key>
+                <dict>
+                    <key>Value</key>
+                    <dict>
+                        <key>attachmentsByRange</key>
+                        <dict>
+                            <key>{0, 1}</key>
+                            <dict>
+                                <key>OutputName</key>
+                                <string>Value for Key</string>
+                                <key>OutputUUID</key>
+                                <string>517A3557-0C2C-4CC8-BC32-44A9D4511E86</string>
+                                <key>Type</key>
+                                <string>ActionOutput</string>
+                            </dict>
+                        </dict>
+                        <key>string</key>
+                        <string>&#xFFFC;</string>
+                    </dict>
+                    <key>WFSerializationType</key>
+                    <string>WFTextTokenString</string>
+                </dict>
+            </dict>
+        </dict>
+
+    </array>
+
+    <key>WFWorkflowClientVersion</key>
+    <string>3612.0.2.1</string>
+
+    <key>WFWorkflowHasOutputFallback</key>
+    <false/>
+
+    <key>WFWorkflowHasShortcutInputVariables</key>
+    <false/>
+
+    <key>WFWorkflowIcon</key>
+    <dict>
+        <key>WFWorkflowIconGlyphNumber</key>
+        <integer>59514</integer>
+        <key>WFWorkflowIconStartColor</key>
+        <integer>431817727</integer>
+    </dict>
+
+    <key>WFWorkflowImportQuestions</key>
+    <array/>
+
+    <key>WFWorkflowInputContentItemClasses</key>
+    <array>
+        <string>WFStringContentItem</string>
+    </array>
+
+    <key>WFWorkflowMinimumClientVersion</key>
+    <integer>900</integer>
+    <key>WFWorkflowMinimumClientVersionString</key>
+    <string>900</string>
+
+    <key>WFWorkflowOutputContentItemClasses</key>
+    <array/>
+
+    <key>WFQuickActionSurfaces</key>
+    <array/>
+
+    <key>WFWorkflowTypes</key>
+    <array>
+        <string>WFWorkflowTypeShowInSearch</string>
+    </array>
+</dict>
+</plist>

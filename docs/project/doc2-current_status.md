@@ -120,14 +120,79 @@
 
 ---
 
-## 后续阶段预告
+---
 
-### Phase 3 - 改动 Shortcuts
-**目标**: 基于 Phase 2 的理解，实际修改现有 shortcut（如去掉 OCR 云服务依赖）。
-- 验证手册的实用性：AI 能否根据手册指导完成改动
-- encode → sign → iPhone 验证改动后可运行
+## Phase 3 - 化整为零，逐步集成 (🔜 进行中)
 
-### Phase 4 - AI 生成 Shortcuts
+**策略**: 不直接改 3-full，先从零搭三个独立小 shortcut，验证每个模块可独立运行，再考虑集成。
+
+| 子任务 | 目标 | 状态 |
+|--------|------|------|
+| **3A** 本地 OCR | 截图 → OCR → 通知输出 | ✅ 完成 |
+| **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ⏳ 待开始 |
+| **3C** iCost 操作 | 理解并复刻 3-full 的 iCost 部分 | ⏳ 待开始 |
+
+---
+
+### 3A — 本地 OCR Shortcut（从零构建）
+
+**目标**: AI 根据手册手写 XML plist，工具链打包签名，iPhone 可运行。
+
+**流程**: `takescreenshot → extracttextfromimage → notification`
+
+**Done 定义**: 导入 iPhone，运行后截图识别结果出现在通知里。
+
+**参考手册**: §6.1 takescreenshot、§6.2 extracttextfromimage、§6.5 notification、§9.8 模式 H
+
+#### 任务清单
+
+**Architect**:
+- [x] **Task 3.1**: 设计 OCR shortcut 的完整 XML 骨架
+  - 明确三个 action 的参数结构
+  - 明确 UUID 引用关系（截图输出 → OCR 输入 → 通知输入）
+  - 产出：`doc3-spec.md` §5，含完整 XML 模板 + 关键设计决策表 ✅
+
+**Engineer**:
+- [x] **Task 3.2**: 按 Architect 规范手写 XML plist
+  - 产出：`samples/ocr-local/ocr-local.xml` ✅
+- [x] **Task 3.3**: build → sign → iPhone 验证
+  - 产出：`samples/ocr-local/ocr-local.shortcut`（AEA 签名，22KB）✅
+  - 验证：iPhone 导入运行，通知显示 OCR 结果 ✅
+  - 发现：conda `tool` 环境不存在，实际用 base Python 3.13，需 Architect 更新 doc3-spec.md §0.1
+
+---
+
+### 3B — DeepSeek 请求 Shortcut（从零构建）
+
+**目标**: 独立验证 DeepSeek API 调用链路，不依赖 3A。
+
+**流程**: `ask → text(构建请求体) → downloadurl → 解析 choices[0].message.content → notification`
+
+**配置**: Import Questions（api_key + base_url，导入时由用户填写，不硬编码）
+
+**Done 定义**: iPhone 上输入一句话，通知显示 DeepSeek 的回复。
+
+**参考手册**: §5.1 downloadurl、§9.5 模式 E、§9.9 模式 I
+
+#### 任务清单
+
+**Architect**:
+- [ ] **Task 3.4**: 设计 DeepSeek shortcut 的完整 XML 骨架
+  - Action 链路与 UUID 引用关系
+  - Import Questions 配置结构（api_key + base_url）
+  - 请求体 JSON 构建方式
+  - 产出：写入 `doc3-spec.md` §6
+
+**Engineer**:
+- [ ] **Task 3.5**: 按规范手写 XML plist
+  - 产出：`samples/deepseek/deepseek.xml`
+- [ ] **Task 3.6**: build → sign → iPhone 验证
+  - 产出：`samples/deepseek/deepseek.shortcut`
+  - 验证：iPhone 输入文本，通知显示 DeepSeek 回复
+
+---
+
+### Phase 4 - AI 生成 Shortcuts（待规划）
 **目标**: AI 根据手册从零生成可工作的 shortcut。
 - 手册拆为 skills，按需加载
 - 端到端：自然语言 → AI 生成 XML plist → 工具链 → 可导入 iOS
