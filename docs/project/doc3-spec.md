@@ -238,6 +238,7 @@ def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") 
 | 3A OCR | [`architect/task-3a-ocr-local.md`](architect/task-3a-ocr-local.md) | [`engineer/task-3a-ocr-local.md`](engineer/task-3a-ocr-local.md) | ✅ 已验收 |
 | 3B DeepSeek | [`architect/task-3b-deepseek-api.md`](architect/task-3b-deepseek-api.md) | [`engineer/task-3b-deepseek-api.md`](engineer/task-3b-deepseek-api.md) | ✅ 已验收 |
 | 3C-1 OCR+DeepSeek | [`architect/task-3c1-ocr-deepseek.md`](architect/task-3c1-ocr-deepseek.md) | [`engineer/task-3c1-ocr-deepseek.md`](engineer/task-3c1-ocr-deepseek.md) | ✅ 已验收 |
+| 3C-2 替换 icost.vip | [`architect/task-3c2-replace-icost.md`](architect/task-3c2-replace-icost.md) | [`engineer/task-3c2-replace-icost.md`](engineer/task-3c2-replace-icost.md) | ✅ 初步通过 |
 
 ### 5.1 跨任务技术经验
 
@@ -249,3 +250,6 @@ def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") 
 - **getvalueforkey 支持点号嵌套路径**（如 `message.content`）
 - **downloadurl 自动解析 JSON response**，无需额外 detect.dictionary
 - **Sample B (2-api.shortcut) 的 text.replace 是坏的**，不能作为参考模板
+- **大规模 XML 修改用 Python 脚本**，不要手动编辑（`plistlib` 操作 dict，自动保持数据完整性）
+- **iCost 实体 Aggrandizement 含 data 块**，从原 XML 提取复用最安全（递归搜索 + `copy.deepcopy`）
+- **替换 action 时保留原 UUID**，避免破坏不可见的下游引用链

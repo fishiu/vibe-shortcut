@@ -130,8 +130,8 @@
 |--------|------|------|
 | **3A** 本地 OCR | 截图 → OCR → 通知输出 | ✅ 完成 |
 | **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ✅ 完成 |
-| **3C-1** OCR+DeepSeek 合体 | 截图 → OCR → DeepSeek JSON → 通知 | 🔜 进行中 |
-| **3C-2** iCost 打通 | JSON 结果 → iCost 记账 | ⏳ 待开始 |
+| **3C-1** OCR+DeepSeek 合体 | 截图 → OCR → DeepSeek JSON → 通知 | ✅ 完成 |
+| **3C-2** 替换 icost.vip | 3-full 中 icost.vip → DeepSeek，保持下游不变 | ✅ 初步通过 |
 
 ---
 
@@ -224,18 +224,16 @@ takescreenshot → extracttextfromimage → text(拼接 prompt + OCR 结果)
 #### 任务清单
 
 **Architect**:
-- [ ] **Task 3.7**: 设计合体 shortcut 的 XML 骨架
-  - OCR 输出如何作为 DeepSeek user message content 嵌入（WFTextTokenString 拼接）
-  - system message 与 user message 的 JSON 请求体结构
-  - UUID 引用链（takescreenshot → OCR → text → downloadurl → 解析链 → notification）
-  - 产出：`doc3-spec.md §7`
+- [x] **Task 3.7**: 设计合体 shortcut 的 XML 骨架
+  - 产出：`docs/project/architect/task-3c1-ocr-deepseek.md`
 
 **Engineer**:
-- [ ] **Task 3.8**: 按规范手写 XML plist
+- [x] **Task 3.8**: 按规范手写 XML plist
   - 产出：`samples/ocr-deepseek/ocr-deepseek.xml`
-- [ ] **Task 3.9**: build → sign → iPhone 验证
+- [x] **Task 3.9**: build → sign → iPhone 验证
   - 产出：`samples/ocr-deepseek/ocr-deepseek.shortcut`
-  - 验证：截图后通知显示记账 JSON
+  - 日志：`docs/project/engineer/task-3c1-ocr-deepseek.md`
+  - 验证：截图后通知显示记账 JSON ✅
 
 ---
 
@@ -252,15 +250,17 @@ takescreenshot → extracttextfromimage → text(拼接 prompt + OCR 结果)
 #### 任务清单
 
 **Architect**:
-- [ ] **Task 3.10**: 分析 `3-full.xml` 中 icost.vip/chat 的接口
-  - 请求体结构（发了什么进去）
-  - `detail` 字段的 JSON 结构（下游取了哪些 key）
-  - 设计 DeepSeek 替换方案：URL + 请求体 + prompt（让 DeepSeek 返回相同 detail 结构）
-  - 产出：`doc3-spec.md §8`
+- [x] **Task 3.10**: 分析 `3-full.xml` 中 icost.vip/chat 的接口
+  - 完整逆向工程 icost.vip 请求/响应结构（7 个 v-field 附件、detail JSON 结构）
+  - 设计 DeepSeek 替换方案：8 个 prompt 占位符（日期/分类/账户/标签/自定义规则/OCR文本）
+  - 产出：`docs/project/architect/task-3c2-replace-icost.md`（1065 行）
 
 **Engineer**:
-- [ ] **Task 3.11**: 在 `3-full.xml` 中做外科替换，build → sign → iPhone 验证
-  - 产出：`samples/money/3-full-deepseek.xml` + 对应 `.shortcut`
+- [x] **Task 3.11**: 在 `3-full.xml` 中做外科替换，build → sign → iPhone 验证
+  - 实现：`tools/modify_3full.py`（Python 脚本操作 plist dict，可重复执行）
+  - 产出：`samples/money/3-full-deepseek.xml`（1146 actions，净增 6）+ `.shortcut`（AEA 签名，101.9 KB）
+  - 日志：`docs/project/engineer/task-3c2-replace-icost.md`
+  - 验证：iPhone 基础记账功能正常，细节待打磨
 
 ---
 
