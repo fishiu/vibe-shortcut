@@ -33,6 +33,7 @@ UUID_CUSTOM_RULES = '4856151E-17D0-45C6-B4F0-DC03CE6B5E6D'
 UUID_API_KEY      = 'D625BA13-A5F8-4D69-955E-29681DF71DD6'
 UUID_DOWNLOAD     = '86D23FE2-31E6-489C-86BE-1B351FE246C5'
 UUID_DETECT_DICT  = 'CDA2A1C9-17AB-4840-AF03-C0701246A682'
+UUID_CONFIG_DICT  = '588A56AF-C875-493B-BF05-B5347751087B'
 
 # === Generate new UUIDs ===
 NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in
@@ -48,7 +49,7 @@ TEMPLATE = (
     '你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。'
     '\\n\\n返回格式：\\n'
     '{\\"answer\\":[{\\"type\\":\\"支出\\",\\"amount\\":0,\\"CC\\":\\"分类名\\",'
-    '\\"date\\":\\"YYYY-MM-DD\\",\\"shop\\":\\"商户名\\",\\"remark\\":\\"备注\\",'
+    '\\"date\\":\\"YYYY-MM-DD HH:mm\\",\\"shop\\":\\"商户名\\",\\"remark\\":\\"备注\\",'
     '\\"tag\\":\\"标签\\",\\"currency\\":\\"CNY\\",\\"account\\":\\"账户名\\",'
     '\\"from_account\\":\\"\\",\\"to_account\\":\\"\\",\\"fee\\":0,\\"discount\\":0}]}'
     '\\n\\n字段规则：\\n'
@@ -56,7 +57,7 @@ TEMPLATE = (
     '- CC: 必须从下方分类列表中选择\\n'
     '- account: 必须从下方账户列表中选择\\n'
     '- tag: 如匹配下方标签列表则填写，否则留空\\n'
-    '- date: 格式YYYY-MM-DD，无法识别则用今天: ' + PH +
+    '- date: 格式YYYY-MM-DD HH:mm，无法识别则用今天: ' + PH +
     '\\n- amount: 金额数字\\n'
     '- 多笔返回多个对象，无法识别返回{\\"answer\\":[]}\\n\\n'
     '支出分类：' + PH +
@@ -139,6 +140,17 @@ def main():
     actions = data['WFWorkflowActions']
     print(f"Loaded {INPUT.name}: {len(actions)} actions")
 
+    # Fix 1: Change 界面风格 from "3" (简易) to "1" (小票, full features)
+    cfg_idx = find_action_idx(actions, UUID_CONFIG_DICT)
+    cfg_items = actions[cfg_idx]['WFWorkflowActionParameters']['WFItems']['Value']['WFDictionaryFieldValueItems']
+    for item in cfg_items:
+        key_str = item.get('WFKey', {}).get('Value', {}).get('string', '')
+        if key_str == '界面风格':
+            old_val = item['WFValue']['Value']['string']
+            item['WFValue']['Value']['string'] = '1'
+            print(f"  Fix 1: 界面风格 '{old_val}' → '1' (at action index {cfg_idx})")
+            break
+
     # Find key action indices
     dl_idx = find_action_idx(actions, UUID_DOWNLOAD)
     dd_idx = find_action_idx(actions, UUID_DETECT_DICT)
@@ -199,12 +211,12 @@ def main():
     # A2: gettext (build DeepSeek JSON body with 8 ￼ placeholders)
     attachments = {}
 
-    # ￼1: CurrentDate (yyyy-MM-dd format)
+    # ￼1: CurrentDate (yyyy-MM-dd HH:mm format, with time precision)
     attachments[f'{{{pos[0]}, 1}}'] = {
         'Aggrandizements': [{
             'WFDateFormatStyle': 'Custom',
-            'WFDateFormat': 'yyyy-MM-dd',
-            'WFISO8601IncludeTime': False,
+            'WFDateFormat': 'yyyy-MM-dd HH:mm',
+            'WFISO8601IncludeTime': True,
             'Type': 'WFDateFormatVariableAggrandizement'
         }],
         'Type': 'CurrentDate'

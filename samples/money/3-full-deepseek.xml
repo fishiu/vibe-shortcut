@@ -191,7 +191,7 @@
 									<key>Value</key>
 									<dict>
 										<key>string</key>
-										<string>3</string>
+										<string>1</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>
@@ -2168,7 +2168,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>157F6CD4-AE76-4086-AB75-8FD6255E56CD</string>
+				<string>44325E5E-2F7C-4B89-A963-D5720C0E23E2</string>
 				<key>WFImage</key>
 				<dict>
 					<key>Value</key>
@@ -2191,14 +2191,14 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>00EF1C9C-7BC1-481B-A754-5F9FC6EA3533</string>
+				<string>080117D3-6DB8-4DF8-8827-8C2B64BCC974</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
 					<dict>
 						<key>attachmentsByRange</key>
 						<dict>
-							<key>{497, 1}</key>
+							<key>{509, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2206,17 +2206,17 @@
 										<key>Type</key>
 										<string>WFDateFormatVariableAggrandizement</string>
 										<key>WFDateFormat</key>
-										<string>yyyy-MM-dd</string>
+										<string>yyyy-MM-dd HH:mm</string>
 										<key>WFDateFormatStyle</key>
 										<string>Custom</string>
 										<key>WFISO8601IncludeTime</key>
-										<false/>
+										<true/>
 									</dict>
 								</array>
 								<key>Type</key>
 								<string>CurrentDate</string>
 							</dict>
-							<key>{557, 1}</key>
+							<key>{569, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2494,7 +2494,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{566, 1}</key>
+							<key>{578, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2772,7 +2772,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{574, 1}</key>
+							<key>{586, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3050,7 +3050,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{580, 1}</key>
+							<key>{592, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3073,7 +3073,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{586, 1}</key>
+							<key>{598, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3096,7 +3096,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{589, 1}</key>
+							<key>{601, 1}</key>
 							<dict>
 								<key>OutputName</key>
 								<string>文本</string>
@@ -3105,18 +3105,18 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{626, 1}</key>
+							<key>{638, 1}</key>
 							<dict>
 								<key>OutputName</key>
 								<string>Text from Image</string>
 								<key>OutputUUID</key>
-								<string>157F6CD4-AE76-4086-AB75-8FD6255E56CD</string>
+								<string>44325E5E-2F7C-4B89-A963-D5720C0E23E2</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
 						</dict>
 						<key>string</key>
-						<string>{"model":"deepseek-chat","messages":[{"role":"system","content":"你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。\n\n返回格式：\n{\"answer\":[{\"type\":\"支出\",\"amount\":0,\"CC\":\"分类名\",\"date\":\"YYYY-MM-DD\",\"shop\":\"商户名\",\"remark\":\"备注\",\"tag\":\"标签\",\"currency\":\"CNY\",\"account\":\"账户名\",\"from_account\":\"\",\"to_account\":\"\",\"fee\":0,\"discount\":0}]}\n\n字段规则：\n- type: 支出/收入/转账\n- CC: 必须从下方分类列表中选择\n- account: 必须从下方账户列表中选择\n- tag: 如匹配下方标签列表则填写，否则留空\n- date: 格式YYYY-MM-DD，无法识别则用今天: ￼\n- amount: 金额数字\n- 多笔返回多个对象，无法识别返回{\"answer\":[]}\n\n支出分类：￼\n支出子分类：￼\n收入分类：￼\n账户：￼\n标签：￼\n￼"},{"role":"user","content":"文字内容：\n￼"}]}</string>
+						<string>{"model":"deepseek-chat","messages":[{"role":"system","content":"你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。\n\n返回格式：\n{\"answer\":[{\"type\":\"支出\",\"amount\":0,\"CC\":\"分类名\",\"date\":\"YYYY-MM-DD HH:mm\",\"shop\":\"商户名\",\"remark\":\"备注\",\"tag\":\"标签\",\"currency\":\"CNY\",\"account\":\"账户名\",\"from_account\":\"\",\"to_account\":\"\",\"fee\":0,\"discount\":0}]}\n\n字段规则：\n- type: 支出/收入/转账\n- CC: 必须从下方分类列表中选择\n- account: 必须从下方账户列表中选择\n- tag: 如匹配下方标签列表则填写，否则留空\n- date: 格式YYYY-MM-DD HH:mm，无法识别则用今天: ￼\n- amount: 金额数字\n- 多笔返回多个对象，无法识别返回{\"answer\":[]}\n\n支出分类：￼\n支出子分类：￼\n收入分类：￼\n账户：￼\n标签：￼\n￼"},{"role":"user","content":"文字内容：\n￼"}]}</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenString</string>
@@ -3129,7 +3129,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>62E85754-8476-4076-87A7-2FA58433FDA1</string>
+				<string>232D06EA-B21B-47B2-B660-C988D52794CD</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3141,7 +3141,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>00EF1C9C-7BC1-481B-A754-5F9FC6EA3533</string>
+								<string>080117D3-6DB8-4DF8-8827-8C2B64BCC974</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -3250,7 +3250,7 @@
 						<key>OutputName</key>
 						<string>Updated Text</string>
 						<key>OutputUUID</key>
-						<string>62E85754-8476-4076-87A7-2FA58433FDA1</string>
+						<string>232D06EA-B21B-47B2-B660-C988D52794CD</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3267,7 +3267,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>DFFB435A-63CE-45A3-A8B2-AB0BC640B675</string>
+				<string>89C509E3-1B93-4538-B8F7-0D20F0C2295B</string>
 				<key>WFDictionaryKey</key>
 				<string>choices</string>
 				<key>WFInput</key>
@@ -3292,7 +3292,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>8B128DC7-5B94-45B0-BAB6-7FE45EF842F0</string>
+				<string>B389E42D-5880-45D3-8C50-62B65F85C4B0</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3300,7 +3300,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>DFFB435A-63CE-45A3-A8B2-AB0BC640B675</string>
+						<string>89C509E3-1B93-4538-B8F7-0D20F0C2295B</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3317,7 +3317,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>CB1DCEEE-648F-46E8-8F84-29362280E8D6</string>
+				<string>EA9A952E-B7AD-4D00-9776-AA3C38AAC2CD</string>
 				<key>WFDictionaryKey</key>
 				<string>message.content</string>
 				<key>WFInput</key>
@@ -3327,7 +3327,7 @@
 						<key>OutputName</key>
 						<string>Item from List</string>
 						<key>OutputUUID</key>
-						<string>8B128DC7-5B94-45B0-BAB6-7FE45EF842F0</string>
+						<string>B389E42D-5880-45D3-8C50-62B65F85C4B0</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3350,7 +3350,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>CB1DCEEE-648F-46E8-8F84-29362280E8D6</string>
+						<string>EA9A952E-B7AD-4D00-9776-AA3C38AAC2CD</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>

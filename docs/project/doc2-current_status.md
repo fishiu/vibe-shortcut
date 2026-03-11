@@ -132,6 +132,7 @@
 | **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ✅ 完成 |
 | **3C-1** OCR+DeepSeek 合体 | 截图 → OCR → DeepSeek JSON → 通知 | ✅ 完成 |
 | **3C-2** 替换 icost.vip | 3-full 中 icost.vip → DeepSeek，保持下游不变 | ✅ 初步通过 |
+| **3C-3** 精修：界面风格 + 时间精度 | 默认界面风格 3→1；CurrentDate 加时分 | 🔜 进行中 |
 
 ---
 
@@ -261,6 +262,35 @@ takescreenshot → extracttextfromimage → text(拼接 prompt + OCR 结果)
   - 产出：`samples/money/3-full-deepseek.xml`（1146 actions，净增 6）+ `.shortcut`（AEA 签名，101.9 KB）
   - 日志：`docs/project/engineer/task-3c2-replace-icost.md`
   - 验证：iPhone 基础记账功能正常，细节待打磨
+
+---
+
+### 3C-3 — 精修：界面风格 + 时间精度
+
+**背景**: 3C-2 初步通过后发现两个问题，均为 `modify_3full.py` 的参数配置问题，不涉及架构变更。
+
+#### 问题 1：界面风格默认简易风格（缺少"不记录"和"改类别"功能）
+
+**根因**: `3-full.xml` 配置 dict（UUID `588A56AF`）的 `界面风格` 默认值为 `3`（简易风格）。简易风格不支持跳过单笔记录和直接改类别，而用户的 3-full 手机版已手动改为风格 1（小票风格）。`modify_3full.py` 未修改该配置，导致 3-full-deepseek 沿用默认值 3。
+
+**修复**: 在 `modify_3full.py` 中增加一步，将 `界面风格` 从 `3` 改为 `1`（小票风格，功能最全）。
+
+#### 问题 2：时间精度不够（只有日期，没有时分）
+
+**根因**: `modify_3full.py` 中 CurrentDate 的 aggrandizement 使用 `yyyy-MM-dd` 格式且 `WFISO8601IncludeTime: False`，导致传给 DeepSeek 的日期无时间信息，DeepSeek 返回的 `date` 字段也只有日期，iCost 记录时无时分。
+
+**修复**: 将格式改为 `yyyy-MM-dd HH:mm`，启用 `WFISO8601IncludeTime: True`，同时更新 TEMPLATE 中的 date 格式说明。
+
+#### 任务清单
+
+**Engineer**:
+- [ ] **Task 3.12**: 修改 `modify_3full.py`，rebuild → sign → iPhone 验证
+  - Fix 1: 找到 UUID `588A56AF` 对应的 dictionary action，将 `界面风格` 值从 `"3"` 改为 `"1"`
+  - Fix 2: 将 A2 的 CurrentDate aggrandizement `WFDateFormat` 改为 `"yyyy-MM-dd HH:mm"`，`WFISO8601IncludeTime` 改为 `True`；更新 TEMPLATE 中 `date` 字段格式说明为 `"YYYY-MM-DD HH:mm"`
+  - 重新运行 `modify_3full.py` → build → sign → iPhone 验证
+  - 验证要点：① 运行后出现小票风格预览界面 ② 预览界面含"不记录此条账单"选项 ③ 含改类别入口 ④ 记录后 iCost 时间精确到分钟
+
+**Done 定义**: 导入 iPhone，记账流程与用户原 3-full（风格 1）体验一致；记录时间精确到分钟。
 
 ---
 
