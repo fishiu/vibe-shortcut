@@ -36,19 +36,24 @@ UUID_DETECT_DICT  = 'CDA2A1C9-17AB-4840-AF03-C0701246A682'
 UUID_CONFIG_DICT  = '588A56AF-C875-493B-BF05-B5347751087B'
 UUID_RANDOM_START = 'F53BB049-980B-4EA5-86C6-15B821935C1D'
 UUID_RANDOM_END   = 'E6974843-33AE-4819-9651-6BC90DE5F949'
+UUID_KEY_DICT     = '29C441EE-B4F5-4A97-9435-A2E321437957'
 
 # === Generate new UUIDs ===
 NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in
              ['ocr', 'body', 'clean', 'choices', 'first', 'content',
-              'show_random_getval', 'show_random_begin', 'show_random_else', 'show_random_end', 'show_random_group']}
+              'show_random_getval', 'show_random_begin', 'show_random_else', 'show_random_end', 'show_random_group',
+              'notif_before', 'notif_after',
+              'cfg_url', 'cfg_model', 'cfg_maxtokens']}
 
 PH = '\ufffc'  # U+FFFC placeholder character
 
-# === DeepSeek JSON body template (§4.4) ===
-# Contains 8 ￼ placeholders for runtime substitution by Shortcuts.
+# === JSON body template ===
+# Contains 10 ￼ placeholders for runtime substitution by Shortcuts.
+# ￼1=模型, ￼2=日期, ￼3-7=iCost实体, ￼8=自定义规则, ￼9=OCR文本, ￼10=max_tokens
 # \n and \" are literal two-character sequences (JSON encoding).
 TEMPLATE = (
-    '{"model":"deepseek-chat","messages":[{"role":"system","content":"'
+    '{"model":"' + PH +
+    '","messages":[{"role":"system","content":"'
     '你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。'
     '\\n\\n返回格式：\\n'
     '{\\"answer\\":[{\\"type\\":\\"支出\\",\\"amount\\":0,\\"CC\\":\\"分类名\\",'
@@ -71,7 +76,8 @@ TEMPLATE = (
     '\\n' + PH +
     '"},{"role":"user","content":"文字内容：\\n'
     + PH +
-    '"}]}'
+    '"}],"max_tokens":' + PH +
+    ',"temperature":0,"thinking":{"type":"disabled"}}'
 )
 
 
@@ -156,6 +162,10 @@ def main():
             old_val = item['WFValue']['Value']
             item['WFValue']['Value'] = False
             print(f"  Fix 1b: 识别优惠 {old_val} → False")
+        if key_str == '显示记录详情':
+            old_val = item['WFValue']['Value']
+            item['WFValue']['Value'] = False
+            print(f"  Fix 1d: 显示记录详情 {old_val} → False")
 
     # Fix 1c: Sync WFWorkflowImportQuestions DefaultValue for config dict (ActionIndex=2)
     for iq in data.get('WFWorkflowImportQuestions', []):
@@ -169,6 +179,9 @@ def main():
                 if k == '识别优惠':
                     dv_item['WFValue']['Value'] = False
                     print(f"  Fix 1c: ImportQuestions 识别优惠 → False")
+                if k == '显示记录详情':
+                    dv_item['WFValue']['Value'] = False
+                    print(f"  Fix 1c: ImportQuestions 显示记录详情 → False")
             # Add 显示随机文字 entry
             dv_items.append({
                 'WFItemType': 4,
@@ -283,6 +296,53 @@ def main():
     actions.insert(rand_start, W1)           # getvalueforkey
     print(f"  Fix 2c: Wrapped random text block [{rand_start}:{rand_end}] with conditional (+4 actions)")
 
+    # Fix 3: Add API config entries to key dict 29C441EE
+    key_idx = find_action_idx(actions, UUID_KEY_DICT)
+    key_items = actions[key_idx]['WFWorkflowActionParameters']['WFItems']['Value']['WFDictionaryFieldValueItems']
+    api_cfg_entries = [
+        ('API地址', 0, {'string': 'https://api.deepseek.com/v1/chat/completions'}),
+        ('模型',   0, {'string': 'deepseek-chat'}),
+        ('max_tokens', 3, {'string': '300'}),
+    ]
+    for key_name, item_type, value_dict in api_cfg_entries:
+        entry = {
+            'WFItemType': item_type,
+            'WFKey': {
+                'Value': {'string': key_name},
+                'WFSerializationType': 'WFTextTokenString'
+            },
+            'WFValue': {
+                'Value': value_dict,
+                'WFSerializationType': 'WFTextTokenString'
+            }
+        }
+        if item_type == 3:  # Number
+            entry['WFValue']['WFSerializationType'] = 'WFTextTokenString'
+        key_items.append(entry)
+        print(f"  Fix 3: Added '{key_name}' to key dict 29C441EE")
+
+    # Fix 3b: Sync ImportQuestions for key dict
+    for iq in data.get('WFWorkflowImportQuestions', []):
+        if iq.get('ActionIndex') == key_idx and iq.get('ParameterKey') == 'WFItems':
+            dv_items = iq['DefaultValue']['Value']['WFDictionaryFieldValueItems']
+            for key_name, item_type, value_dict in api_cfg_entries:
+                dv_items.append({
+                    'WFItemType': item_type,
+                    'WFKey': {
+                        'Value': {'string': key_name},
+                        'WFSerializationType': 'WFTextTokenString'
+                    },
+                    'WFValue': {
+                        'Value': value_dict,
+                        'WFSerializationType': 'WFTextTokenString'
+                    }
+                })
+            # Update Text description
+            iq['Text'] = iq['Text'].rstrip() + \
+                '\n\n🌐 API地址：API 端点 URL\n🤖 模型：模型名称\n📏 max_tokens：最大输出 token 数'
+            print(f"  Fix 3b: ImportQuestions synced for key dict")
+            break
+
     # Find key action indices
     dl_idx = find_action_idx(actions, UUID_DOWNLOAD)
     dd_idx = find_action_idx(actions, UUID_DETECT_DICT)
@@ -293,8 +353,8 @@ def main():
 
     # Calculate placeholder positions in template
     pos = find_positions(TEMPLATE, PH)
-    assert len(pos) == 8, f"Expected 8 placeholders, got {len(pos)}"
-    labels = ['当前日期', '支出分类', '支出子分类', '收入分类', '账户', '标签', '自定义规则', 'OCR文本']
+    assert len(pos) == 10, f"Expected 10 placeholders, got {len(pos)}"
+    labels = ['模型', '当前日期', '支出分类', '支出子分类', '收入分类', '账户', '标签', '自定义规则', 'OCR文本', 'max_tokens']
     print("\nPlaceholder positions:")
     for i, p in enumerate(pos):
         print(f"  ￼{i+1} {labels[i]}: {{{p}, 1}}")
@@ -340,11 +400,18 @@ def main():
         }
     }
 
-    # A2: gettext (build DeepSeek JSON body with 8 ￼ placeholders)
+    # A2: gettext (build DeepSeek JSON body with 10 ￼ placeholders)
     attachments = {}
 
-    # ￼1: CurrentDate (yyyy-MM-dd HH:mm format, with time precision)
+    # ￼1: 模型 (from config)
     attachments[f'{{{pos[0]}, 1}}'] = {
+        'OutputName': '词典值',
+        'OutputUUID': NEW_UUIDS['cfg_model'],
+        'Type': 'ActionOutput'
+    }
+
+    # ￼2: CurrentDate (yyyy-MM-dd HH:mm format, with time precision)
+    attachments[f'{{{pos[1]}, 1}}'] = {
         'Aggrandizements': [{
             'WFDateFormatStyle': 'Custom',
             'WFDateFormat': 'yyyy-MM-dd HH:mm',
@@ -354,21 +421,28 @@ def main():
         'Type': 'CurrentDate'
     }
 
-    # ￼2-6: iCost entity references (.name property)
+    # ￼3-7: iCost entity references (.name property)
     for i, name in enumerate(['exp_first', 'exp_second', 'income', 'asset', 'tag']):
-        attachments[f'{{{pos[i + 1]}, 1}}'] = entity_refs[name]
+        attachments[f'{{{pos[i + 2]}, 1}}'] = entity_refs[name]
 
-    # ￼7: User custom rules (plain ActionOutput, no Aggrandizement)
-    attachments[f'{{{pos[6]}, 1}}'] = {
+    # ￼8: User custom rules (plain ActionOutput, no Aggrandizement)
+    attachments[f'{{{pos[7]}, 1}}'] = {
         'OutputName': '文本',
         'OutputUUID': UUID_CUSTOM_RULES,
         'Type': 'ActionOutput'
     }
 
-    # ￼8: OCR text
-    attachments[f'{{{pos[7]}, 1}}'] = {
+    # ￼9: OCR text
+    attachments[f'{{{pos[8]}, 1}}'] = {
         'OutputName': 'Text from Image',
         'OutputUUID': NEW_UUIDS['ocr'],
+        'Type': 'ActionOutput'
+    }
+
+    # ￼10: max_tokens (from config)
+    attachments[f'{{{pos[9]}, 1}}'] = {
+        'OutputName': '词典值',
+        'OutputUUID': NEW_UUIDS['cfg_maxtokens'],
         'Type': 'ActionOutput'
     }
 
@@ -418,7 +492,19 @@ def main():
             'ShowHeaders': True,
             'WFHTTPMethod': 'POST',
             'WFHTTPBodyType': 'File',
-            'WFURL': 'https://api.deepseek.com/v1/chat/completions',
+            'WFURL': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{0, 1}': {
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_url'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': PH
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            },
             'WFHTTPHeaders': {
                 'Value': {
                     'WFDictionaryFieldValueItems': [
@@ -530,13 +616,65 @@ def main():
         'WFSerializationType': 'WFTextTokenAttachment'
     }
 
+    # N1: notification before DeepSeek call
+    N1 = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['notif_before'],
+            'WFNotificationActionBody': '⏳ 正在调用 DeepSeek...'
+        }
+    }
+
+    # N2: notification after DeepSeek call — show raw response for debugging
+    N2 = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['notif_after'],
+            'WFNotificationActionBody': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{2, 1}': {
+                            'OutputName': 'Contents of URL',
+                            'OutputUUID': UUID_DOWNLOAD,
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': f'✅ {PH}'
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            }
+        }
+    }
+
+    # GV1/GV2/GV3: read API config from key dict 29C441EE
+    def make_gv(uuid_key, dict_key):
+        return {
+            'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+            'WFWorkflowActionParameters': {
+                'UUID': NEW_UUIDS[uuid_key],
+                'WFDictionaryKey': dict_key,
+                'WFInput': {
+                    'Value': {
+                        'OutputName': '词典',
+                        'OutputUUID': UUID_KEY_DICT,
+                        'Type': 'ActionOutput'
+                    },
+                    'WFSerializationType': 'WFTextTokenAttachment'
+                }
+            }
+        }
+
+    GV1 = make_gv('cfg_url', 'API地址')
+    GV2 = make_gv('cfg_model', '模型')
+    GV3 = make_gv('cfg_maxtokens', 'max_tokens')
+
     # === Apply modifications ===
-    # Replace 2 original actions (downloadurl + detect.dictionary) with 8 new actions
-    new_actions = [A1, A2, A3, B, C1, C2, C3, D]
+    # Replace 2 original actions (downloadurl + detect.dictionary) with 13 new actions
+    new_actions = [GV1, GV2, GV3, A1, A2, A3, N1, B, N2, C1, C2, C3, D]
     actions[dl_idx:dd_idx + 1] = new_actions
 
     print(f"\nReplaced actions[{dl_idx}:{dd_idx+1}] with {len(new_actions)} new actions")
-    print(f"  Total actions: {len(actions)} (was {len(actions) - 6})")
+    print(f"  Total actions: {len(actions)} (was {len(actions) - 11})")
 
     # === Save output ===
     with open(OUTPUT, 'wb') as f:
@@ -550,16 +688,16 @@ def main():
     # Verification: check template integrity in saved file
     saved = plistlib.loads(OUTPUT.read_bytes())
     saved_actions = saved['WFWorkflowActions']
-    gettext_action = saved_actions[dl_idx + 1]  # A2 is at dl_idx + 1
+    gettext_action = saved_actions[dl_idx + 4]  # A2 is at dl_idx + 4 (after GV1/GV2/GV3/A1)
     saved_template = gettext_action['WFWorkflowActionParameters']['WFTextActionText']['Value']['string']
     saved_attachments = gettext_action['WFWorkflowActionParameters']['WFTextActionText']['Value']['attachmentsByRange']
     n_ph = saved_template.count(PH)
     n_att = len(saved_attachments)
     print(f"\nVerification:")
-    print(f"  Template placeholders: {n_ph} (expected 8)")
-    print(f"  Attachments: {n_att} (expected 8)")
-    assert n_ph == 8, f"Template has {n_ph} placeholders, expected 8"
-    assert n_att == 8, f"Template has {n_att} attachments, expected 8"
+    print(f"  Template placeholders: {n_ph} (expected 10)")
+    print(f"  Attachments: {n_att} (expected 10)")
+    assert n_ph == 10, f"Template has {n_ph} placeholders, expected 10"
+    assert n_att == 10, f"Template has {n_att} attachments, expected 10"
     print("  ✓ All checks passed")
 
 

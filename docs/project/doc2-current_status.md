@@ -134,6 +134,8 @@
 | **3C-2** 替换 icost.vip | 3-full 中 icost.vip → DeepSeek，保持下游不变 | ✅ 初步通过 |
 | **3C-3** 精修：界面风格 + 时间精度 | 默认界面风格 3→1；CurrentDate 加时分 | ✅ 完成 |
 | **3C-4** 随机文字开关 | 配置 `显示随机文字` Boolean，conditional 包裹跳过 icost.vip API | ✅ 完成 |
+| **3C-5** 隐藏收银员 + API 计时通知 | 显示记录详情→false；DeepSeek 前后各弹通知 | ✅ 完成 |
+| **3C-6** API 配置外置 | URL/模型/max_tokens 做成可配置项，放密钥字典 | 🔜 待开发 |
 
 ---
 
@@ -292,6 +294,186 @@ takescreenshot → extracttextfromimage → text(拼接 prompt + OCR 结果)
   - 验证要点：① 运行后出现小票风格预览界面 ② 预览界面含"不记录此条账单"选项 ③ 含改类别入口 ④ 记录后 iCost 时间精确到分钟
 
 **Done 定义**: 导入 iPhone，记账流程与用户原 3-full（风格 1）体验一致；记录时间精确到分钟。
+
+---
+
+### 3C-5 — 隐藏收银员信息 + DeepSeek API 计时通知
+
+**背景**: 记账结果页面显示收银员等无用信息；用户想感知 DeepSeek API 耗时。
+
+#### 改动 1：隐藏收银员信息
+
+配置字典 `588A56AF` 中 `显示记录详情` 设为 `false`，同步 `WFWorkflowImportQuestions`。
+
+与 Fix 1b（识别优惠）完全同模式：
+```python
+if key_str == '显示记录详情':
+    item['WFValue']['Value'] = False
+```
+ImportQuestions 中同 key 也要同步。
+
+#### 改动 2：DeepSeek 前后各加一个 notification
+
+在 `new_actions` 列表中，downloadurl (B) 的前后各插入一个 notification action：
+
+```
+A1 extracttextfromimage
+A2 gettext (JSON body)
+A3 text.replace (清洗换行)
+N1 notification "⏳ 正在调用 DeepSeek..."       ← 新增
+B  downloadurl (POST DeepSeek)
+N2 notification "✅ DeepSeek 返回完成"           ← 新增
+C1 getvalueforkey (choices)
+C2 getitemfromlist
+C3 getvalueforkey (message.content)
+D  detect.dictionary
+```
+
+notification action 结构（参考 3-full.xml line 2109）：
+```python
+{
+    'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
+    'WFWorkflowActionParameters': {
+        'UUID': NEW_UUIDS['notif_before'],
+        'WFNotificationActionBody': '⏳ 正在调用 DeepSeek...'
+    }
+}
+```
+
+需要在 `NEW_UUIDS` 中新增 2 个 key：`notif_before`, `notif_after`。
+
+`new_actions` 列表从 `[A1, A2, A3, B, C1, C2, C3, D]` 改为 `[A1, A2, A3, N1, B, N2, C1, C2, C3, D]`。
+
+#### Engineer 任务清单
+
+- [ ] `modify_3full.py` 中添加 `显示记录详情` → `False`（action + ImportQuestions 双写）
+- [ ] 新增 N1、N2 两个 notification action，插入 new_actions
+- [ ] 新增 2 个 UUID key
+- [ ] 运行 `modify_3full.py` → build → sign → iPhone 验证
+- [x] 验证：① 记账结果页无收银员信息 ② DeepSeek 调用前后各弹一条通知
+- [ ] TEMPLATE 末尾加 `,"max_tokens":300,"temperature":0`（在最外层 `}` 之前）
+- [ ] 重新运行 → build → sign → iPhone 验证 API 响应速度是否改善
+
+**Done 定义**: 记账结果页无收银员/操作员信息；能通过两条通知感知 API 耗时。
+
+---
+
+### 3C-6 — API 配置外置
+
+**背景**: 用户希望能在 Shortcuts 配置界面直接切换 API provider（DeepSeek / 智谱 GLM 等），不需要重新构建 shortcut。
+
+#### 当前状态
+
+API URL 和 model 硬编码在 `modify_3full.py` 中：
+- WFURL: `https://api.deepseek.com/v1/chat/completions`（downloadurl action B 的参数）
+- model: `deepseek-chat`（TEMPLATE 字符串内部）
+- max_tokens: 无
+
+#### 目标
+
+将这三个值做成 Shortcuts 配置项，放在密钥字典 `29C441EE`（shortcut 的第一个 action）里，与 `密钥` 同级。
+
+#### 改动设计
+
+**1. 密钥字典 `29C441EE` 新增 3 个 key**
+
+| Key | WFItemType | 默认值 |
+|-----|-----------|--------|
+| `API地址` | 0 (Text) | `https://api.deepseek.com/v1/chat/completions` |
+| `模型` | 0 (Text) | `deepseek-chat` |
+| `max_tokens` | 3 (Number) | `300` |
+
+用户切换到智谱时只需在 Shortcuts 配置界面改：
+- API地址 → `https://open.bigmodel.cn/api/paas/v4/chat/completions`
+- 模型 → `glm-4.5-airx`
+- 密钥 → 智谱 API key
+
+**2. 新增 3 个 getvalueforkey action（读取配置值）**
+
+在 DeepSeek 流程之前（new_actions 最前面）插入：
+```
+GV1: getvalueforkey 'API地址'     from dict 29C441EE
+GV2: getvalueforkey '模型'        from dict 29C441EE
+GV3: getvalueforkey 'max_tokens'  from dict 29C441EE
+```
+
+UUID 常量：`UUID_KEY_DICT = '29C441EE-B4F5-4A97-9435-A2E321437957'`
+
+NEW_UUIDS 新增：`cfg_url`, `cfg_model`, `cfg_maxtokens`
+
+**3. TEMPLATE 改造（8 → 10 个占位符）**
+
+```python
+TEMPLATE = (
+    '{"model":"' + PH +                          # ← ￼1 模型名 (NEW)
+    '","messages":[{"role":"system","content":"'
+    ...（中间 8 个占位符不变，但序号变为 ￼2-￼9）...
+    + PH +
+    '"}],"max_tokens":' + PH +                    # ← ￼10 max_tokens (NEW)
+    ',"temperature":0,"thinking":{"type":"disabled"}}'
+)
+```
+
+占位符映射（10 个）：
+
+| # | 字段 | 引用 |
+|---|------|------|
+| ￼1 | 模型 | GV2 输出 |
+| ￼2 | 当前日期 | CurrentDate (yyyy-MM-dd HH:mm) |
+| ￼3-￼7 | iCost 实体 | 原有 5 个 entity ref |
+| ￼8 | 自定义规则 | gettext 输出 |
+| ￼9 | OCR 文本 | extracttextfromimage 输出 |
+| ￼10 | max_tokens | GV3 输出 |
+
+位置计算代码从 `assert len(pos) == 8` 改为 `assert len(pos) == 10`，attachment 赋值相应偏移。
+
+**4. downloadurl (B) 的 WFURL 改为引用配置值**
+
+当前：
+```python
+'WFURL': 'https://api.deepseek.com/v1/chat/completions'
+```
+
+改为：
+```python
+'WFURL': {
+    'Value': {
+        'attachmentsByRange': {
+            '{0, 1}': {
+                'OutputName': '词典值',
+                'OutputUUID': NEW_UUIDS['cfg_url'],
+                'Type': 'ActionOutput'
+            }
+        },
+        'string': PH
+    },
+    'WFSerializationType': 'WFTextTokenString'
+}
+```
+
+**5. new_actions 列表更新**
+
+```python
+new_actions = [GV1, GV2, GV3, A1, A2, A3, N1, B, N2, C1, C2, C3, D]
+#              ^^^^^^^^^^^^ 3 个新增的 getvalueforkey
+```
+
+**6. ImportQuestions 同步**
+
+如果 dict `29C441EE` 有对应的 ImportQuestions 条目（ActionIndex=0），需要同步添加 3 个新 key 的 DefaultValue 和 Text 描述。
+
+#### Engineer 任务清单
+
+- [ ] `modify_3full.py`：密钥字典 `29C441EE` 追加 3 个 key
+- [ ] 新增 3 个 getvalueforkey action (GV1/GV2/GV3)，新增 3 个 UUID key
+- [ ] TEMPLATE 首尾各加一个占位符，pos 断言改为 10，attachment 映射偏移；末尾硬编码 `,"thinking":{"type":"disabled"}`（关闭 GLM 推理模式，DeepSeek 会忽略此参数）
+- [ ] downloadurl 的 WFURL 改为 WFTextTokenString 引用 GV1
+- [ ] new_actions 前面插入 GV1/GV2/GV3
+- [ ] ImportQuestions 同步（如有）
+- [ ] 运行 → build → sign → iPhone 验证
+- [ ] 验证：① 默认配置（DeepSeek）记账正常 ② 改为智谱 glm-4.5-airx 后记账正常
+
+**Done 定义**: 不重新构建 shortcut，仅在 Shortcuts 配置界面改 4 个字段（密钥、API地址、模型、max_tokens），即可切换 API provider。
 
 ---
 

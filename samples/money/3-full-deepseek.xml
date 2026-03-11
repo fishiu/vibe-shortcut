@@ -139,6 +139,78 @@
 									<string>WFTextTokenString</string>
 								</dict>
 							</dict>
+							<dict>
+								<key>WFItemType</key>
+								<integer>0</integer>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>API地址</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>https://api.deepseek.com/v1/chat/completions</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+							</dict>
+							<dict>
+								<key>WFItemType</key>
+								<integer>0</integer>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>模型</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>deepseek-chat</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+							</dict>
+							<dict>
+								<key>WFItemType</key>
+								<integer>3</integer>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>max_tokens</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>300</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+							</dict>
 						</array>
 					</dict>
 					<key>WFSerializationType</key>
@@ -235,7 +307,7 @@
 								<key>WFValue</key>
 								<dict>
 									<key>Value</key>
-									<true/>
+									<false/>
 									<key>WFSerializationType</key>
 									<string>WFNumberSubstitutableState</string>
 								</dict>
@@ -1923,7 +1995,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>6B473FC3-FB17-4DEE-B888-9F18159FB4BA</string>
+				<string>62167745-70C2-4375-BB00-B697F4579B8D</string>
 				<key>WFDictionaryKey</key>
 				<string>显示随机文字</string>
 				<key>WFInput</key>
@@ -1948,9 +2020,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<string>1ADB81C9-3044-4857-A6E6-92DE31E7B808</string>
 				<key>UUID</key>
-				<string>4EF3AB78-2806-4D9B-804F-AD4F8D3003BA</string>
+				<string>453CE354-ABDC-42BC-B100-095239942FF8</string>
 				<key>WFCondition</key>
 				<integer>4</integer>
 				<key>WFControlFlowMode</key>
@@ -1975,7 +2047,7 @@
 							<key>OutputName</key>
 							<string>词典值</string>
 							<key>OutputUUID</key>
-							<string>6B473FC3-FB17-4DEE-B888-9F18159FB4BA</string>
+							<string>62167745-70C2-4375-BB00-B697F4579B8D</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -2235,9 +2307,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<string>1ADB81C9-3044-4857-A6E6-92DE31E7B808</string>
 				<key>UUID</key>
-				<string>C3790EAD-9AC3-4BB7-B02D-A4BA7D58250D</string>
+				<string>585FD53C-D919-4360-AE04-98643015B2C8</string>
 				<key>WFControlFlowMode</key>
 				<integer>1</integer>
 			</dict>
@@ -2248,9 +2320,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<string>1ADB81C9-3044-4857-A6E6-92DE31E7B808</string>
 				<key>UUID</key>
-				<string>EBC729C5-F21D-4AC4-B61C-5B6FAFEE0E44</string>
+				<string>45ABA51A-604D-4273-A5D2-D83B2A9293C8</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -2282,11 +2354,86 @@
 		</dict>
 		<dict>
 			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>722E3F73-409B-4314-8390-6C2A9E5F3547</string>
+				<key>WFDictionaryKey</key>
+				<string>API地址</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>词典</string>
+						<key>OutputUUID</key>
+						<string>29C441EE-B4F5-4A97-9435-A2E321437957</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>F2F4F4DA-910C-46C0-AC27-E45BFB8365F3</string>
+				<key>WFDictionaryKey</key>
+				<string>模型</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>词典</string>
+						<key>OutputUUID</key>
+						<string>29C441EE-B4F5-4A97-9435-A2E321437957</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>BFA30A9E-49C6-440E-812A-7B5A852792D3</string>
+				<key>WFDictionaryKey</key>
+				<string>max_tokens</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>词典</string>
+						<key>OutputUUID</key>
+						<string>29C441EE-B4F5-4A97-9435-A2E321437957</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
 			<string>is.workflow.actions.extracttextfromimage</string>
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>FCF7DB5C-BAE5-4E0A-A17B-3871B08CAD49</string>
+				<string>21FD9F07-8B12-4841-B07D-B046D68413C1</string>
 				<key>WFImage</key>
 				<dict>
 					<key>Value</key>
@@ -2309,14 +2456,23 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>7570F7DF-01A5-4805-AE2F-AE75A52E2306</string>
+				<string>EC8A3400-AAEF-40E3-BD3C-6404935965CE</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
 					<dict>
 						<key>attachmentsByRange</key>
 						<dict>
-							<key>{509, 1}</key>
+							<key>{10, 1}</key>
+							<dict>
+								<key>OutputName</key>
+								<string>词典值</string>
+								<key>OutputUUID</key>
+								<string>F2F4F4DA-910C-46C0-AC27-E45BFB8365F3</string>
+								<key>Type</key>
+								<string>ActionOutput</string>
+							</dict>
+							<key>{497, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2334,7 +2490,7 @@
 								<key>Type</key>
 								<string>CurrentDate</string>
 							</dict>
-							<key>{569, 1}</key>
+							<key>{557, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2612,7 +2768,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{578, 1}</key>
+							<key>{566, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -2890,7 +3046,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{586, 1}</key>
+							<key>{574, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3168,7 +3324,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{592, 1}</key>
+							<key>{580, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3191,7 +3347,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{598, 1}</key>
+							<key>{586, 1}</key>
 							<dict>
 								<key>Aggrandizements</key>
 								<array>
@@ -3214,7 +3370,7 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{601, 1}</key>
+							<key>{589, 1}</key>
 							<dict>
 								<key>OutputName</key>
 								<string>文本</string>
@@ -3223,18 +3379,27 @@
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
-							<key>{638, 1}</key>
+							<key>{626, 1}</key>
 							<dict>
 								<key>OutputName</key>
 								<string>Text from Image</string>
 								<key>OutputUUID</key>
-								<string>FCF7DB5C-BAE5-4E0A-A17B-3871B08CAD49</string>
+								<string>21FD9F07-8B12-4841-B07D-B046D68413C1</string>
+								<key>Type</key>
+								<string>ActionOutput</string>
+							</dict>
+							<key>{644, 1}</key>
+							<dict>
+								<key>OutputName</key>
+								<string>词典值</string>
+								<key>OutputUUID</key>
+								<string>BFA30A9E-49C6-440E-812A-7B5A852792D3</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
 						</dict>
 						<key>string</key>
-						<string>{"model":"deepseek-chat","messages":[{"role":"system","content":"你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。\n\n返回格式：\n{\"answer\":[{\"type\":\"支出\",\"amount\":0,\"CC\":\"分类名\",\"date\":\"YYYY-MM-DD HH:mm\",\"shop\":\"商户名\",\"remark\":\"备注\",\"tag\":\"标签\",\"currency\":\"CNY\",\"account\":\"账户名\",\"from_account\":\"\",\"to_account\":\"\",\"fee\":0,\"discount\":0}]}\n\n字段规则：\n- type: 支出/收入/转账\n- CC: 必须从下方分类列表中选择\n- account: 必须从下方账户列表中选择\n- tag: 如匹配下方标签列表则填写，否则留空\n- date: 格式YYYY-MM-DD HH:mm，无法识别则用今天: ￼\n- amount: 金额数字\n- 多笔返回多个对象，无法识别返回{\"answer\":[]}\n\n支出分类：￼\n支出子分类：￼\n收入分类：￼\n账户：￼\n标签：￼\n￼"},{"role":"user","content":"文字内容：\n￼"}]}</string>
+						<string>{"model":"￼","messages":[{"role":"system","content":"你是记账识别助手。分析用户提供的OCR文字，提取账单信息。只返回JSON，不要输出任何其他内容。\n\n返回格式：\n{\"answer\":[{\"type\":\"支出\",\"amount\":0,\"CC\":\"分类名\",\"date\":\"YYYY-MM-DD HH:mm\",\"shop\":\"商户名\",\"remark\":\"备注\",\"tag\":\"标签\",\"currency\":\"CNY\",\"account\":\"账户名\",\"from_account\":\"\",\"to_account\":\"\",\"fee\":0,\"discount\":0}]}\n\n字段规则：\n- type: 支出/收入/转账\n- CC: 必须从下方分类列表中选择\n- account: 必须从下方账户列表中选择\n- tag: 如匹配下方标签列表则填写，否则留空\n- date: 格式YYYY-MM-DD HH:mm，无法识别则用今天: ￼\n- amount: 金额数字\n- 多笔返回多个对象，无法识别返回{\"answer\":[]}\n\n支出分类：￼\n支出子分类：￼\n收入分类：￼\n账户：￼\n标签：￼\n￼"},{"role":"user","content":"文字内容：\n￼"}],"max_tokens":￼,"temperature":0,"thinking":{"type":"disabled"}}</string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenString</string>
@@ -3247,7 +3412,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>8D2F4994-B99A-466C-923A-075EB0500D5A</string>
+				<string>07570DCF-7EC2-4FCC-86EB-0537473BE23C</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3259,7 +3424,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>7570F7DF-01A5-4805-AE2F-AE75A52E2306</string>
+								<string>EC8A3400-AAEF-40E3-BD3C-6404935965CE</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -3275,6 +3440,17 @@
 </string>
 				<key>WFReplaceTextReplace</key>
 				<string> </string>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.notification</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>9311B0AF-4F9B-4720-A63F-9C43100DDCAA</string>
+				<key>WFNotificationActionBody</key>
+				<string>⏳ 正在调用 DeepSeek...</string>
 			</dict>
 		</dict>
 		<dict>
@@ -3368,7 +3544,7 @@
 						<key>OutputName</key>
 						<string>Updated Text</string>
 						<key>OutputUUID</key>
-						<string>8D2F4994-B99A-466C-923A-075EB0500D5A</string>
+						<string>07570DCF-7EC2-4FCC-86EB-0537473BE23C</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3376,7 +3552,58 @@
 					<string>WFTextTokenAttachment</string>
 				</dict>
 				<key>WFURL</key>
-				<string>https://api.deepseek.com/v1/chat/completions</string>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{0, 1}</key>
+							<dict>
+								<key>OutputName</key>
+								<string>词典值</string>
+								<key>OutputUUID</key>
+								<string>722E3F73-409B-4314-8390-6C2A9E5F3547</string>
+								<key>Type</key>
+								<string>ActionOutput</string>
+							</dict>
+						</dict>
+						<key>string</key>
+						<string>￼</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenString</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.notification</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
+				<string>3831D88D-DA53-4D36-B6C6-A8E56E299903</string>
+				<key>WFNotificationActionBody</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>attachmentsByRange</key>
+						<dict>
+							<key>{2, 1}</key>
+							<dict>
+								<key>OutputName</key>
+								<string>Contents of URL</string>
+								<key>OutputUUID</key>
+								<string>86D23FE2-31E6-489C-86BE-1B351FE246C5</string>
+								<key>Type</key>
+								<string>ActionOutput</string>
+							</dict>
+						</dict>
+						<key>string</key>
+						<string>✅ ￼</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenString</string>
+				</dict>
 			</dict>
 		</dict>
 		<dict>
@@ -3385,7 +3612,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>CA7EAF22-CA23-40A8-AA3C-C61685EC0BF0</string>
+				<string>BD28E652-7AEE-4667-B419-26A978FA8821</string>
 				<key>WFDictionaryKey</key>
 				<string>choices</string>
 				<key>WFInput</key>
@@ -3410,7 +3637,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>E657662E-064B-40C6-8A5E-0613CDD67CC5</string>
+				<string>9D126161-5E7D-4EC4-B461-FD9026BB0467</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3418,7 +3645,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>CA7EAF22-CA23-40A8-AA3C-C61685EC0BF0</string>
+						<string>BD28E652-7AEE-4667-B419-26A978FA8821</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3435,7 +3662,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>459935D7-134D-481E-BAB2-0D8D76C59D81</string>
+				<string>8CBD5F80-FB2C-407E-8FAF-915CDD918AC3</string>
 				<key>WFDictionaryKey</key>
 				<string>message.content</string>
 				<key>WFInput</key>
@@ -3445,7 +3672,7 @@
 						<key>OutputName</key>
 						<string>Item from List</string>
 						<key>OutputUUID</key>
-						<string>E657662E-064B-40C6-8A5E-0613CDD67CC5</string>
+						<string>9D126161-5E7D-4EC4-B461-FD9026BB0467</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3468,7 +3695,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>459935D7-134D-481E-BAB2-0D8D76C59D81</string>
+						<string>8CBD5F80-FB2C-407E-8FAF-915CDD918AC3</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -39152,6 +39379,78 @@
 								<string>WFTextTokenString</string>
 							</dict>
 						</dict>
+						<dict>
+							<key>WFItemType</key>
+							<integer>0</integer>
+							<key>WFKey</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>API地址</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+							<key>WFValue</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>https://api.deepseek.com/v1/chat/completions</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+						</dict>
+						<dict>
+							<key>WFItemType</key>
+							<integer>0</integer>
+							<key>WFKey</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>模型</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+							<key>WFValue</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>deepseek-chat</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+						</dict>
+						<dict>
+							<key>WFItemType</key>
+							<integer>3</integer>
+							<key>WFKey</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>max_tokens</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+							<key>WFValue</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>300</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+						</dict>
 					</array>
 				</dict>
 				<key>WFSerializationType</key>
@@ -39167,7 +39466,11 @@
 如果还未取得密钥，请联系@牛塔司_NeoTARS 领取。  
 
 指令使用中遇到的任何问题，可浏览下方网站寻求解决办法。  
-⚠️ 请勿改动其它内容。</string>
+⚠️ 请勿改动其它内容。
+
+🌐 API地址：API 端点 URL
+🤖 模型：模型名称
+📏 max_tokens：最大输出 token 数</string>
 		</dict>
 		<dict>
 			<key>ActionIndex</key>
@@ -39241,7 +39544,7 @@
 							<key>WFValue</key>
 							<dict>
 								<key>Value</key>
-								<true/>
+								<false/>
 								<key>WFSerializationType</key>
 								<string>WFNumberSubstitutableState</string>
 							</dict>
