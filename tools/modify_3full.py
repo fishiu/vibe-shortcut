@@ -34,10 +34,13 @@ UUID_API_KEY      = 'D625BA13-A5F8-4D69-955E-29681DF71DD6'
 UUID_DOWNLOAD     = '86D23FE2-31E6-489C-86BE-1B351FE246C5'
 UUID_DETECT_DICT  = 'CDA2A1C9-17AB-4840-AF03-C0701246A682'
 UUID_CONFIG_DICT  = '588A56AF-C875-493B-BF05-B5347751087B'
+UUID_RANDOM_START = 'F53BB049-980B-4EA5-86C6-15B821935C1D'
+UUID_RANDOM_END   = 'E6974843-33AE-4819-9651-6BC90DE5F949'
 
 # === Generate new UUIDs ===
 NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in
-             ['ocr', 'body', 'clean', 'choices', 'first', 'content']}
+             ['ocr', 'body', 'clean', 'choices', 'first', 'content',
+              'show_random_getval', 'show_random_begin', 'show_random_else', 'show_random_end', 'show_random_group']}
 
 PH = '\ufffc'  # U+FFFC placeholder character
 
@@ -148,8 +151,137 @@ def main():
         if key_str == '界面风格':
             old_val = item['WFValue']['Value']['string']
             item['WFValue']['Value']['string'] = '1'
-            print(f"  Fix 1: 界面风格 '{old_val}' → '1' (at action index {cfg_idx})")
+            print(f"  Fix 1a: 界面风格 '{old_val}' → '1' (at action index {cfg_idx})")
+        if key_str == '识别优惠':
+            old_val = item['WFValue']['Value']
+            item['WFValue']['Value'] = False
+            print(f"  Fix 1b: 识别优惠 {old_val} → False")
+
+    # Fix 1c: Sync WFWorkflowImportQuestions DefaultValue for config dict (ActionIndex=2)
+    for iq in data.get('WFWorkflowImportQuestions', []):
+        if iq.get('ActionIndex') == cfg_idx and iq.get('ParameterKey') == 'WFItems':
+            dv_items = iq['DefaultValue']['Value']['WFDictionaryFieldValueItems']
+            for dv_item in dv_items:
+                k = dv_item.get('WFKey', {}).get('Value', {}).get('string', '')
+                if k == '界面风格':
+                    dv_item['WFValue']['Value']['string'] = '1'
+                    print(f"  Fix 1c: ImportQuestions 界面风格 → '1'")
+                if k == '识别优惠':
+                    dv_item['WFValue']['Value'] = False
+                    print(f"  Fix 1c: ImportQuestions 识别优惠 → False")
+            # Add 显示随机文字 entry
+            dv_items.append({
+                'WFItemType': 4,
+                'WFKey': {
+                    'Value': {'string': '显示随机文字'},
+                    'WFSerializationType': 'WFTextTokenString'
+                },
+                'WFValue': {
+                    'Value': False,
+                    'WFSerializationType': 'WFNumberSubstitutableState'
+                }
+            })
+            print(f"  Fix 1c: ImportQuestions added '显示随机文字' = false")
+            # Update Text description
+            iq['Text'] = iq['Text'].rstrip() + \
+                '\n🎲 显示随机文字：是否在截图后弹出随机句子（弱智吧金句/诗词等），关闭可加快记账速度。'
+            print(f"  Fix 1c: ImportQuestions Text updated")
             break
+
+    # Fix 2: Add 显示随机文字 toggle + conditional wrapper around random text block
+    # 2a: Add config entry to dict 588A56AF
+    cfg_items.append({
+        'WFItemType': 4,   # Boolean
+        'WFKey': {
+            'Value': {'string': '显示随机文字'},
+            'WFSerializationType': 'WFTextTokenString'
+        },
+        'WFValue': {
+            'Value': False,
+            'WFSerializationType': 'WFNumberSubstitutableState'
+        }
+    })
+    print(f"  Fix 2a: Added '显示随机文字' = false to config dict")
+
+    # 2b: Update comment action text (append random text description)
+    for action in actions:
+        params = action.get('WFWorkflowActionParameters', {})
+        comment = params.get('WFCommentActionText', '')
+        if isinstance(comment, str) and '界面风格' in comment and '延迟截图' in comment:
+            params['WFCommentActionText'] = comment + \
+                '\n🎲 显示随机文字：是否在截图后弹出随机句子（弱智吧金句/诗词等），关闭可加快记账速度。'
+            print(f"  Fix 2b: Updated comment action text")
+            break
+
+    # 2c: Wrap 10 random text actions in conditional
+    rand_start = find_action_idx(actions, UUID_RANDOM_START)
+    rand_end = find_action_idx(actions, UUID_RANDOM_END)
+    assert rand_end == rand_start + 9, \
+        f"Random text block should be 10 consecutive actions (got {rand_end - rand_start + 1})"
+
+    W1 = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['show_random_getval'],
+            'WFDictionaryKey': '显示随机文字',
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典',
+                    'OutputUUID': UUID_CONFIG_DICT,
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+    W2 = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+        'WFWorkflowActionParameters': {
+            'GroupingIdentifier': NEW_UUIDS['show_random_group'],
+            'UUID': NEW_UUIDS['show_random_begin'],
+            'WFCondition': 4,           # greater than or equal to
+            'WFControlFlowMode': 0,     # BEGIN
+            'WFInput': {
+                'Type': 'Variable',
+                'Variable': {
+                    'Value': {
+                        'Aggrandizements': [{
+                            'CoercionItemClass': 'WFNumberContentItem',
+                            'Type': 'WFCoercionVariableAggrandizement'
+                        }],
+                        'OutputName': '词典值',
+                        'OutputUUID': NEW_UUIDS['show_random_getval'],
+                        'Type': 'ActionOutput'
+                    },
+                    'WFSerializationType': 'WFTextTokenAttachment'
+                }
+            },
+            'WFNumberValue': '1'
+        }
+    }
+    W2_ELSE = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+        'WFWorkflowActionParameters': {
+            'GroupingIdentifier': NEW_UUIDS['show_random_group'],
+            'UUID': NEW_UUIDS['show_random_else'],
+            'WFControlFlowMode': 1      # ELSE
+        }
+    }
+    W3 = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+        'WFWorkflowActionParameters': {
+            'GroupingIdentifier': NEW_UUIDS['show_random_group'],
+            'UUID': NEW_UUIDS['show_random_end'],
+            'WFControlFlowMode': 2      # END
+        }
+    }
+
+    # Insert back to front to preserve indices
+    actions.insert(rand_end + 1, W3)         # END
+    actions.insert(rand_end + 1, W2_ELSE)    # ELSE (right after 10 actions)
+    actions.insert(rand_start, W2)           # BEGIN
+    actions.insert(rand_start, W1)           # getvalueforkey
+    print(f"  Fix 2c: Wrapped random text block [{rand_start}:{rand_end}] with conditional (+4 actions)")
 
     # Find key action indices
     dl_idx = find_action_idx(actions, UUID_DOWNLOAD)

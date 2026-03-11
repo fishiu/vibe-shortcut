@@ -128,9 +128,12 @@ Phase 2 的核心产出是 `docs/shortcuts-manual-v{version}.md`，记录了 Sho
 - **v0.3**: 46 种 action (+ Sample C: 完全体, 1914 行) ✅ **← 当前版本**
 
 ### 2.4 技术验证结论 (Phase 2 完成)
-- ✅ `WFCondition` 运算符表完整: 0=等于, 1=不等于, 2=小于, 3=大于, 4=大于等于, 5=小于等于, 100=有任何值
-- ✅ **conditional 分支方向**: BEGIN→ELSE = true 分支, ELSE→END = false 分支
-- ✅ `WFCondition=4` 确认为 ≥ (Sample C 中出现 82 次)
+- ⚠️ `WFCondition` 运算符表**文本模式与数值模式不同**:
+  - 文本模式: 0=等于, 1=不等于, 2=小于, 3=大于, 4=大于等于, 5=小于等于, 100=有任何值
+  - 数值模式: 0=小于(!!), 4=大于等于 — **其余待验证**（3C-4 实测发现）
+  - **安全选择**: 数值判断优先用 `WFCondition=4`（≥），这是经 Sample C + 3C-4 双重验证的运算符
+- ✅ **conditional 分支方向**: BEGIN→ELSE = true 分支, ELSE→END = false 分支（ELSE 非强制，可只用 BEGIN+END）
+- ✅ `WFCondition=4` 确认为 ≥（文本/数值模式一致，Sample C 中出现 82 次）
 - ✅ `WFItemType`: 0=Text, 1=Dictionary, 3=Number, 4=Boolean, 5=Array (无 2)
 - ✅ 4 种序列化类型: WFTextTokenAttachment, WFTextTokenString, WFDictionaryFieldValue, WFContentPredicateTableTemplate
 - ✅ 4 种控制流: conditional, choosefrommenu, repeat.count, repeat.each
@@ -239,6 +242,7 @@ def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") 
 | 3B DeepSeek | [`architect/task-3b-deepseek-api.md`](architect/task-3b-deepseek-api.md) | [`engineer/task-3b-deepseek-api.md`](engineer/task-3b-deepseek-api.md) | ✅ 已验收 |
 | 3C-1 OCR+DeepSeek | [`architect/task-3c1-ocr-deepseek.md`](architect/task-3c1-ocr-deepseek.md) | [`engineer/task-3c1-ocr-deepseek.md`](engineer/task-3c1-ocr-deepseek.md) | ✅ 已验收 |
 | 3C-2 替换 icost.vip | [`architect/task-3c2-replace-icost.md`](architect/task-3c2-replace-icost.md) | [`engineer/task-3c2-replace-icost.md`](engineer/task-3c2-replace-icost.md) | ✅ 初步通过 |
+| 3C-4 随机文字开关 | [`architect/task-3c4-random-text-toggle.md`](architect/task-3c4-random-text-toggle.md) | [`engineer/task-3c2-replace-icost.md`](engineer/task-3c2-replace-icost.md) | ✅ 已验收 |
 
 ### 5.1 跨任务技术经验
 
@@ -253,3 +257,6 @@ def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") 
 - **大规模 XML 修改用 Python 脚本**，不要手动编辑（`plistlib` 操作 dict，自动保持数据完整性）
 - **iCost 实体 Aggrandizement 含 data 块**，从原 XML 提取复用最安全（递归搜索 + `copy.deepcopy`）
 - **替换 action 时保留原 UUID**，避免破坏不可见的下游引用链
+- **修改配置字典时必须同步 `WFWorkflowImportQuestions`**（`DefaultValue` 是独立副本，不同步则导入时显示旧默认值）
+- **conditional 可以只用 BEGIN+END**（省略 ELSE），Shortcuts app 默认创建三段式但非强制
+- **Boolean 判断用 coerce → Number + `WFCondition=4`（≥1）**，不要用 `WFCondition=0`（数值模式下是"小于"）

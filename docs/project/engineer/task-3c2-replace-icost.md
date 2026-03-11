@@ -1,23 +1,22 @@
-# Engineer Log: Task 3C-2 - 替换 3-full 的 icost.vip 请求
+# Engineer Log: Task 3C-2/3C-3/3C-4 — 替换 icost.vip + 精修 + 随机文字开关
 
 > **Date**: 2026-03-11
-> **Related Task**: Phase 3C-2 — 替换 icost.vip
-> **Status**: ✅ iPhone 初步验证通过，细节待打磨
+> **Related Task**: Phase 3C-2 ~ 3C-4
+> **Status**: ✅ 阶段性完成，iPhone 验证通过
 
 ---
 
 ## 1. 任务目标
 
-按 Architect 设计（`architect/task-3c2-replace-icost.md`），在 `3-full.xml`（1140 actions）中外科手术式替换 `icost.vip/wapi/v1/chat` 调用为 DeepSeek API，保持下游 1100+ actions 零改动。
+在 `3-full.xml`（1140 actions）中外科手术式替换 `icost.vip/wapi/v1/chat` 调用为 DeepSeek API，并做三轮精修：
 
-**验收标准**:
-- [x] `samples/money/3-full-deepseek.xml` 存在，1146 actions（净增 6）
-- [x] `samples/money/3-full-deepseek.shortcut` 存在，AEA1 签名格式
-- [x] 8 个 ￼ 位置验证通过（Python 脚本自动计算）
-- [x] UUID 引用链完整：downloadurl (86D23FE2) + detect.dictionary (CDA2A1C9) UUID 不变
-- [x] 下游 getvalueforkey("detail") 仍引用 CDA2A1C9（零改动验证）
-- [x] iCost 实体 Aggrandizement 含 data 块（3 个 CategoryEntity 已提取）
-- [x] iPhone 导入并运行记账流程（初步通过，基础记账功能正常，细节待打磨）
+| 轮次 | 内容 | 验证 |
+|------|------|------|
+| 3C-2 | 替换 icost.vip → DeepSeek（核心改动） | ✅ |
+| 3C-3 | 界面风格 3→1、识别优惠默认关、时间精度 HH:mm | ✅ |
+| 3C-4 | 新增「显示随机文字」开关，conditional 包裹金句块 | ✅ |
+
+**最终产出**: `samples/money/3-full-deepseek.shortcut`（AEA 签名，1150 actions）
 
 ---
 
@@ -25,120 +24,177 @@
 
 ### 2.1 工具选择
 
-选择 Python 脚本 (`tools/modify_3full.py`) 操作 plist dict，而非手动编辑 XML。原因：
-- 修改涉及 ~1436 行的精确替换
-- plistlib 保证数据完整性
-- 可自动提取现有 Aggrandizement data 块
+Python 脚本 `tools/modify_3full.py`，读取原始 `3-full.xml` → 内存修改 plist dict → 输出 `3-full-deepseek.xml`，可重复执行。
 
-### 2.2 修改区域
+### 2.2 全部修改清单
 
-原 actions[66:68]（2 个 action）→ 新 actions[66:74]（8 个 action）：
+脚本按顺序执行以下修改（每次从原始 3-full.xml 开始）：
 
 ```
-[66] extracttextfromimage (OCR)     → UUID 157F6CD4  ← 引用 image.resize (0B4F4A02)
-[67] gettext (JSON body)            → UUID 00EF1C9C  ← 8 个 ￼ 引用 iCost 实体 + OCR
-[68] text.replace (清洗换行)        → UUID 62E85754  ← WFInput(WFTextTokenString) 引用 [67]
-[69] downloadurl (POST DeepSeek)    → UUID 86D23FE2  ← 保留原 UUID，body 引用 [68]
-[70] getvalueforkey (choices)       → UUID DFFB435A  ← 引用 [69]
-[71] getitemfromlist (choices[0])    → UUID 8B128DC7  ← 引用 [70]
-[72] getvalueforkey (msg.content)   → UUID CB1DCEEE  ← 引用 [71]
-[73] detect.dictionary (修改输入)   → UUID CDA2A1C9  ← 保留原 UUID，输入改引 [72]
+Fix 1a: 配置字典 588A56AF — 界面风格 "3" → "1"
+Fix 1b: 配置字典 588A56AF — 识别优惠 True → False
+Fix 1c: WFWorkflowImportQuestions — 同步 DefaultValue + 添加显示随机文字 + 更新 Text
+Fix 2a: 配置字典 588A56AF — 添加「显示随机文字」= false
+Fix 2b: Comment action — 追加 🎲 说明文字
+Fix 2c: 用 conditional (BEGIN/ELSE/END) 包裹 10 个金句 action
+主流程: 插入 OCR + gettext + text.replace → 替换 downloadurl → 插入 choices 解析链 → 修改 detect.dictionary 输入
 ```
 
-### 2.3 ￼ 位置计算结果
+### 2.3 Action 结构（最终）
 
 ```
-￼1 当前日期:    {497, 1}  → CurrentDate (yyyy-MM-dd)
-￼2 支出分类:    {557, 1}  → 6724C445 .name (含 data 块)
-￼3 支出子分类:  {566, 1}  → 1EDA8BA8 .name (含 data 块)
-￼4 收入分类:    {574, 1}  → 7FEC0A01 .name (含 data 块)
-￼5 账户:        {580, 1}  → 2493C32C .name (无 data 块)
-￼6 标签:        {586, 1}  → E6362569 .name (无 data 块)
-￼7 自定义规则:  {589, 1}  → 4856151E (gettext 输出)
-￼8 OCR文本:     {626, 1}  → 157F6CD4 (OCR 输出)
+[55] getvalueforkey 显示随机文字     ← 新增 (3C-4)
+[56] conditional BEGIN (≥ 1)         ← 新增 (3C-4)
+  [57-66] 原 10 个金句 action        ← 不变，被条件包裹
+[67] conditional ELSE                ← 新增 (3C-4)
+[68] conditional END                 ← 新增 (3C-4)
+...
+[70] extracttextfromimage (OCR)      ← 新增 (3C-2)
+[71] gettext (JSON body, 8 个 ￼)    ← 新增 (3C-2), 时间格式 HH:mm (3C-3)
+[72] text.replace (清洗换行)         ← 新增 (3C-2)
+[73] downloadurl (POST DeepSeek)     ← 替换 (3C-2), UUID 86D23FE2 保留
+[74] getvalueforkey (choices)        ← 新增 (3C-2)
+[75] getitemfromlist (choices[0])     ← 新增 (3C-2)
+[76] getvalueforkey (msg.content)    ← 新增 (3C-2)
+[77] detect.dictionary               ← 修改输入引用 (3C-2), UUID CDA2A1C9 保留
 ```
 
-### 2.4 Aggrandizement data 块提取
+### 2.4 ￼ 位置计算结果（3C-3 更新后）
 
-通过递归搜索原 downloadurl action 的 FormValues.v，成功提取了 5 个 iCost 实体引用的 Aggrandizement：
-- **3 个含 data 块**：exp_first (6724C445), exp_second (1EDA8BA8), income (7FEC0A01) — 均为 ICSearchCategoryEntity
-- **2 个无 data 块**：asset (2493C32C, ICSearchAssetEntity), tag (E6362569, ICSearchTagEntity) — 原 XML 中这两个实体的引用就没有 data 块
+```
+￼1 当前日期:    {509, 1}  → CurrentDate (yyyy-MM-dd HH:mm)
+￼2 支出分类:    {569, 1}  → 6724C445 .name
+￼3 支出子分类:  {578, 1}  → 1EDA8BA8 .name
+￼4 收入分类:    {586, 1}  → 7FEC0A01 .name
+￼5 账户:        {592, 1}  → 2493C32C .name
+￼6 标签:        {598, 1}  → E6362569 .name
+￼7 自定义规则:  {601, 1}  → 4856151E
+￼8 OCR文本:     {638, 1}  → OCR UUID
+```
 
 ---
 
-## 3. 关键设计决策
+## 3. 经验教训（Shortcuts 开发铁律）
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| text.replace WFInput | WFTextTokenString | 3C-1 实战教训：WFTextTokenAttachment 导致输入为空 |
-| Aggrandizement data 块 | 从原 XML 提取 | 保持与原文件完全一致，避免运行时 .name 提取失败 |
-| downloadurl body type | File | 3B/3C-1 验证的成熟方案 |
-| 保留原 UUID | 86D23FE2 + CDA2A1C9 | 避免破坏下游引用链 |
-| 无 debug alert | 直接发布版 | 基于 3C-1 成熟模式，风险可控 |
+本轮开发踩了三个大坑，每个都导致了"代码写对了但 iPhone 上不工作"的情况。以下经验适用于所有未来 Shortcuts 开发。
+
+### 铁律 1: WFCondition 数值运算符与文本运算符不同
+
+**坑**: doc3-spec 记录的 `WFCondition` 运算符表 `0=等于, 1=不等于, 2=小于...` **仅适用于文本比较**。数值比较时，`WFCondition=0` 实际是"小于"（`<`），不是"等于"。
+
+**现象**: 用 `WFCondition=0, WFNumberValue='1'` 检查布尔值，期望 `false(0) == 1 → 不执行`，iPhone 上实际显示为 `< 1`，导致 `false(0) < 1 → true → 执行`，逻辑完全反转。
+
+**正确做法**: 数值条件优先使用 `WFCondition=4`（≥），这是原文件中已验证的运算符。判断布尔值用 `值 ≥ 1`：`true(1) ≥ 1 → 执行`，`false(0) ≥ 1 → 跳过`。
+
+**数值 WFCondition 实测映射**（待补全）:
+
+| WFCondition | 数值含义 | 文本含义 |
+|:-----------:|----------|----------|
+| 0 | < (小于) | 等于 |
+| 4 | ≥ (大于等于) | ≥ (大于等于) |
+| 其他 | 待验证 | 见 doc3-spec |
+
+> **TODO for Architect**: 需要系统性验证数值条件的全部运算符映射（1/2/3/5），更新 doc3-spec §2.4 和手册。
+
+### 铁律 2: 修改配置值必须同步 WFWorkflowImportQuestions
+
+**坑**: 只修改了 dictionary action 中的 `WFItems` 值（如界面风格 `"3"` → `"1"`），但 `WFWorkflowImportQuestions` 有独立的 `DefaultValue` 副本。导入时 Shortcuts app 用的是 ImportQuestions 的 DefaultValue，不是 action 里的值。
+
+**现象**: Python 验证脚本确认 action 中值已改，但 iPhone 导入后仍显示原默认值。
+
+**正确做法**: 修改配置字典时，必须同时修改两处：
+
+```python
+# 1. 修改 action 中的字典值
+cfg_items = actions[cfg_idx]['WFWorkflowActionParameters']['WFItems']['Value']['WFDictionaryFieldValueItems']
+
+# 2. 同步修改 WFWorkflowImportQuestions 中对应条目的 DefaultValue
+for iq in data['WFWorkflowImportQuestions']:
+    if iq['ActionIndex'] == cfg_idx and iq['ParameterKey'] == 'WFItems':
+        dv_items = iq['DefaultValue']['Value']['WFDictionaryFieldValueItems']
+        # 同步修改 dv_items...
+        # 新增配置项也要加到 dv_items 和 iq['Text']
+```
+
+### 额外经验（延续 3C-1）
+
+| 经验 | 说明 |
+|------|------|
+| text.replace WFInput 必须用 WFTextTokenString | WFTextTokenAttachment 导致输入为空（3C-1 实战验证） |
+| 大规模 XML 修改用 Python 脚本 | plistlib 操作 dict 保证数据完整性，可重复执行 |
+| 替换 action 时保留原 UUID | 避免破坏不可见的下游引用链（如 86D23FE2, CDA2A1C9） |
+| iCost 实体 Aggrandizement 含 data 块 | 从原 XML 提取复用最安全（递归搜索 + deepcopy） |
+| ￼ 位置动态计算 | TEMPLATE 文本改动（如加 HH:mm）会移位，必须用脚本自动算，不能手动硬编码 |
 
 ---
 
 ## 4. 产出文件
 
-- `tools/modify_3full.py` — 修改脚本（可重复执行）
-- `samples/money/3-full-deepseek.xml` — 修改后 XML（1146 actions）
-- `samples/money/3-full-deepseek-unsigned.shortcut` — binary plist
-- `samples/money/3-full-deepseek.shortcut` — AEA 签名（101.9 KB）
+| 文件 | 说明 |
+|------|------|
+| `tools/modify_3full.py` | 修改脚本（可重复执行，含全部 fix） |
+| `samples/money/3-full-deepseek.xml` | 修改后 XML（1150 actions） |
+| `samples/money/3-full-deepseek-unsigned.shortcut` | binary plist |
+| `samples/money/3-full-deepseek.shortcut` | AEA 签名 |
 
 ---
 
 ## 5. 构建命令
 
 ```bash
-# 生成修改后的 XML
+# 生成修改后的 XML（从 3-full.xml 开始，可重复执行）
 /opt/homebrew/Caskroom/miniconda/base/bin/python tools/modify_3full.py
 
 # 构建 + 签名
-/opt/homebrew/Caskroom/miniconda/base/bin/python tools/shortcut_tool.py build samples/money/3-full-deepseek.xml samples/money/3-full-deepseek-unsigned.shortcut
-/opt/homebrew/Caskroom/miniconda/base/bin/python tools/shortcut_tool.py sign samples/money/3-full-deepseek-unsigned.shortcut samples/money/3-full-deepseek.shortcut
+/opt/homebrew/Caskroom/miniconda/base/bin/python tools/shortcut_tool.py build \
+    samples/money/3-full-deepseek.xml samples/money/3-full-deepseek-unsigned.shortcut
+/opt/homebrew/Caskroom/miniconda/base/bin/python tools/shortcut_tool.py sign \
+    samples/money/3-full-deepseek-unsigned.shortcut samples/money/3-full-deepseek.shortcut
 ```
 
 ---
 
-## 6. 已知风险
+## 6. iPhone 验证结果
 
-- **OCR 文本含双引号 `"`**：可能破坏 JSON。当前仅清洗换行符，实测后决定是否需要额外 text.replace
-- **asset/tag 无 data 块**：原 XML 中这两个实体引用就没有 data 块，可能影响 .name 提取
-- **DeepSeek 返回非 JSON**：detect.dictionary 解析失败时 answer 为空，触发"识别失败"菜单
-- **收银员编辑等 icost.vip 功能**：仅替换 /chat 接口，其他 icost.vip 调用暂不处理
+### 3C-2 基础验证
+- [x] 导入 shortcut，密钥改为 DeepSeek API Key
+- [x] 选择账本 → 截图 → OCR + DeepSeek 识别 → 记账成功
 
----
+### 3C-3 精修验证
+- [x] 小票风格预览界面（含"不记录此条账单"选项、改类别入口）
+- [x] 识别优惠默认关闭
+- [x] 记录时间精确到分钟
 
-## 7. iPhone 验证结果
-
-1. [x] 导入 `3-full-deepseek.shortcut` 到 iPhone
-2. [x] 修改密钥为 DeepSeek API Key (`sk-xxx`)
-3. [x] 选择账本 → 截图 → 验证 OCR + DeepSeek 识别结果
-4. [x] 基础记账流程正常执行（分类匹配、账户匹配等）
-
-**结论**: 初步通过，基础记账功能可用，部分细节待打磨。
+### 3C-4 金句开关验证
+- [x] 默认（显示随机文字=false）：截图后不弹金句，直接进入 OCR
+- [x] 打开后（显示随机文字=true）：截图后弹出随机句子（原有行为）
+- [x] 两种模式下记账主流程均正常
 
 ---
 
-## 8. 建议 PM / Architect 更新的内容
+## 7. 已知风险
 
-以下内容供 PM 和 Architect 参考，Engineer 不直接修改他们的文档。
+- **OCR 文本含双引号 `"`**: 可能破坏 JSON body，当前仅清洗换行符
+- **DeepSeek 返回非 JSON**: detect.dictionary 解析失败时 answer 为空，触发"识别失败"菜单
+- **收银员编辑等 icost.vip 功能**: 仅替换 /chat 接口，其他 icost.vip 调用暂不处理
+- **数值 WFCondition 映射不完整**: 仅验证了 0(=<) 和 4(=≥)，其他值待验证
+
+---
+
+## 8. 建议 PM / Architect 更新
 
 ### 8.1 建议 PM 更新 `doc2-current_status.md`
 
-- 3C-1 状态：`🔜 进行中` → `✅ 完成`
-- 3C-2 状态：`⏳ 待开始` → `✅ 初步通过`
-- Task 3.10 (Architect)：勾选完成，补充产出 `architect/task-3c2-replace-icost.md`
-- Task 3.11 (Engineer)：勾选完成，补充：
-  - 实现：`tools/modify_3full.py`
-  - 产出：`samples/money/3-full-deepseek.xml`（1146 actions）+ `.shortcut`（AEA 签名，101.9 KB）
-  - 日志：`docs/project/engineer/task-3c2-replace-icost.md`
-  - 验证：iPhone 基础记账功能正常，细节待打磨
+- 3C-2: `✅ 初步通过` → `✅ 阶段性完成`
+- 3C-3: `[ ] Task 3.12` → `[x]`，补充验证结果
+- 3C-4: 新增任务条目，标记 `✅ 完成`
 
 ### 8.2 建议 Architect 更新 `doc3-spec.md`
 
-- §5 设计文档索引表：3C-2 行更新状态 `📐 设计完成` → `✅ 初步通过`，补充 Engineer 日志链接
-- §5.1 跨任务技术经验，建议新增：
-  - **大规模 XML 修改用 Python 脚本**，不要手动编辑（`plistlib` 操作 dict，自动保持数据完整性）
-  - **iCost 实体 Aggrandizement 含 data 块**，从原 XML 提取复用最安全（`find_attachment_for_uuid` 递归搜索 + `copy.deepcopy`）
-  - **替换 action 时保留原 UUID**，避免破坏不可见的下游引用链
+- **§2.4 WFCondition**: 补充数值运算符与文本运算符的区别，标注 `WFCondition=0` 在数值模式下是"小于"
+- **§5.1 跨任务技术经验**: 新增"修改配置必须同步 WFWorkflowImportQuestions"
+
+### 8.3 建议更新手册
+
+- `docs/shortcuts-manual-v0.3.md` 补充数值 WFCondition 映射表
+- 新增"配置字典双写"模式（action WFItems + ImportQuestions DefaultValue）

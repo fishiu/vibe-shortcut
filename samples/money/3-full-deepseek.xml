@@ -157,7 +157,8 @@
 🗃️ 显示记录详情：是否显示操作员名称、记录次数等
 💸 识别优惠：是否识别优惠金额
 🕹️ 位置：是否记录记账位置，iCost会员才能使用（打开会影响拖慢记录的速度）
-📸 延迟截图：如果出现金额识别为空，或者识别出错的情况，可打开此开关解决问题。</string>
+📸 延迟截图：如果出现金额识别为空，或者识别出错的情况，可打开此开关解决问题。
+🎲 显示随机文字：是否在截图后弹出随机句子（弱智吧金句/诗词等），关闭可加快记账速度。</string>
 			</dict>
 		</dict>
 		<dict>
@@ -255,7 +256,7 @@
 								<key>WFValue</key>
 								<dict>
 									<key>Value</key>
-									<true/>
+									<false/>
 									<key>WFSerializationType</key>
 									<string>WFNumberSubstitutableState</string>
 								</dict>
@@ -290,6 +291,27 @@
 									<dict>
 										<key>string</key>
 										<string>延迟截图</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<false/>
+									<key>WFSerializationType</key>
+									<string>WFNumberSubstitutableState</string>
+								</dict>
+							</dict>
+							<dict>
+								<key>WFItemType</key>
+								<integer>4</integer>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>显示随机文字</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>
@@ -1901,6 +1923,76 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
+				<string>6B473FC3-FB17-4DEE-B888-9F18159FB4BA</string>
+				<key>WFDictionaryKey</key>
+				<string>显示随机文字</string>
+				<key>WFInput</key>
+				<dict>
+					<key>Value</key>
+					<dict>
+						<key>OutputName</key>
+						<string>词典</string>
+						<key>OutputUUID</key>
+						<string>588A56AF-C875-493B-BF05-B5347751087B</string>
+						<key>Type</key>
+						<string>ActionOutput</string>
+					</dict>
+					<key>WFSerializationType</key>
+					<string>WFTextTokenAttachment</string>
+				</dict>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<key>UUID</key>
+				<string>4EF3AB78-2806-4D9B-804F-AD4F8D3003BA</string>
+				<key>WFCondition</key>
+				<integer>4</integer>
+				<key>WFControlFlowMode</key>
+				<integer>0</integer>
+				<key>WFInput</key>
+				<dict>
+					<key>Type</key>
+					<string>Variable</string>
+					<key>Variable</key>
+					<dict>
+						<key>Value</key>
+						<dict>
+							<key>Aggrandizements</key>
+							<array>
+								<dict>
+									<key>CoercionItemClass</key>
+									<string>WFNumberContentItem</string>
+									<key>Type</key>
+									<string>WFCoercionVariableAggrandizement</string>
+								</dict>
+							</array>
+							<key>OutputName</key>
+							<string>词典值</string>
+							<key>OutputUUID</key>
+							<string>6B473FC3-FB17-4DEE-B888-9F18159FB4BA</string>
+							<key>Type</key>
+							<string>ActionOutput</string>
+						</dict>
+						<key>WFSerializationType</key>
+						<string>WFTextTokenAttachment</string>
+					</dict>
+				</dict>
+				<key>WFNumberValue</key>
+				<string>1</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.getvalueforkey</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>UUID</key>
 				<string>F53BB049-980B-4EA5-86C6-15B821935C1D</string>
 				<key>WFDictionaryKey</key>
 				<string>通知内容</string>
@@ -2139,6 +2231,32 @@
 		</dict>
 		<dict>
 			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<key>UUID</key>
+				<string>C3790EAD-9AC3-4BB7-B02D-A4BA7D58250D</string>
+				<key>WFControlFlowMode</key>
+				<integer>1</integer>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
+			<string>is.workflow.actions.conditional</string>
+			<key>WFWorkflowActionParameters</key>
+			<dict>
+				<key>GroupingIdentifier</key>
+				<string>212AF3F3-1293-438E-8AFA-BB8DFBCCC646</string>
+				<key>UUID</key>
+				<string>EBC729C5-F21D-4AC4-B61C-5B6FAFEE0E44</string>
+				<key>WFControlFlowMode</key>
+				<integer>2</integer>
+			</dict>
+		</dict>
+		<dict>
+			<key>WFWorkflowActionIdentifier</key>
 			<string>is.workflow.actions.image.resize</string>
 			<key>WFWorkflowActionParameters</key>
 			<dict>
@@ -2168,7 +2286,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>44325E5E-2F7C-4B89-A963-D5720C0E23E2</string>
+				<string>FCF7DB5C-BAE5-4E0A-A17B-3871B08CAD49</string>
 				<key>WFImage</key>
 				<dict>
 					<key>Value</key>
@@ -2191,7 +2309,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>080117D3-6DB8-4DF8-8827-8C2B64BCC974</string>
+				<string>7570F7DF-01A5-4805-AE2F-AE75A52E2306</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
@@ -3110,7 +3228,7 @@
 								<key>OutputName</key>
 								<string>Text from Image</string>
 								<key>OutputUUID</key>
-								<string>44325E5E-2F7C-4B89-A963-D5720C0E23E2</string>
+								<string>FCF7DB5C-BAE5-4E0A-A17B-3871B08CAD49</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -3129,7 +3247,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>232D06EA-B21B-47B2-B660-C988D52794CD</string>
+				<string>8D2F4994-B99A-466C-923A-075EB0500D5A</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3141,7 +3259,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>080117D3-6DB8-4DF8-8827-8C2B64BCC974</string>
+								<string>7570F7DF-01A5-4805-AE2F-AE75A52E2306</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -3250,7 +3368,7 @@
 						<key>OutputName</key>
 						<string>Updated Text</string>
 						<key>OutputUUID</key>
-						<string>232D06EA-B21B-47B2-B660-C988D52794CD</string>
+						<string>8D2F4994-B99A-466C-923A-075EB0500D5A</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3267,7 +3385,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>89C509E3-1B93-4538-B8F7-0D20F0C2295B</string>
+				<string>CA7EAF22-CA23-40A8-AA3C-C61685EC0BF0</string>
 				<key>WFDictionaryKey</key>
 				<string>choices</string>
 				<key>WFInput</key>
@@ -3292,7 +3410,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>B389E42D-5880-45D3-8C50-62B65F85C4B0</string>
+				<string>E657662E-064B-40C6-8A5E-0613CDD67CC5</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -3300,7 +3418,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>89C509E3-1B93-4538-B8F7-0D20F0C2295B</string>
+						<string>CA7EAF22-CA23-40A8-AA3C-C61685EC0BF0</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3317,7 +3435,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>EA9A952E-B7AD-4D00-9776-AA3C38AAC2CD</string>
+				<string>459935D7-134D-481E-BAB2-0D8D76C59D81</string>
 				<key>WFDictionaryKey</key>
 				<string>message.content</string>
 				<key>WFInput</key>
@@ -3327,7 +3445,7 @@
 						<key>OutputName</key>
 						<string>Item from List</string>
 						<key>OutputUUID</key>
-						<string>B389E42D-5880-45D3-8C50-62B65F85C4B0</string>
+						<string>E657662E-064B-40C6-8A5E-0613CDD67CC5</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3350,7 +3468,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>EA9A952E-B7AD-4D00-9776-AA3C38AAC2CD</string>
+						<string>459935D7-134D-481E-BAB2-0D8D76C59D81</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -39080,7 +39198,7 @@
 								<key>Value</key>
 								<dict>
 									<key>string</key>
-									<string>3</string>
+									<string>1</string>
 								</dict>
 								<key>WFSerializationType</key>
 								<string>WFTextTokenString</string>
@@ -39144,7 +39262,7 @@
 							<key>WFValue</key>
 							<dict>
 								<key>Value</key>
-								<true/>
+								<false/>
 								<key>WFSerializationType</key>
 								<string>WFNumberSubstitutableState</string>
 							</dict>
@@ -39191,6 +39309,27 @@
 								<string>WFNumberSubstitutableState</string>
 							</dict>
 						</dict>
+						<dict>
+							<key>WFItemType</key>
+							<integer>4</integer>
+							<key>WFKey</key>
+							<dict>
+								<key>Value</key>
+								<dict>
+									<key>string</key>
+									<string>显示随机文字</string>
+								</dict>
+								<key>WFSerializationType</key>
+								<string>WFTextTokenString</string>
+							</dict>
+							<key>WFValue</key>
+							<dict>
+								<key>Value</key>
+								<false/>
+								<key>WFSerializationType</key>
+								<string>WFNumberSubstitutableState</string>
+							</dict>
+						</dict>
 					</array>
 				</dict>
 				<key>WFSerializationType</key>
@@ -39204,7 +39343,8 @@
 🗃️ 显示记录详情：是否显示操作员名称、记录次数等 
 💸 识别优惠：是否识别优惠金额 
 🕹️ 位置：是否记录记账位置，iCost会员才能使用（打开会影响拖慢记录的速度） 
-📸 延迟截图：如果出现金额识别为空，或者识别出错的情况，可打开此开关解决问题。</string>
+📸 延迟截图：如果出现金额识别为空，或者识别出错的情况，可打开此开关解决问题。
+🎲 显示随机文字：是否在截图后弹出随机句子（弱智吧金句/诗词等），关闭可加快记账速度。</string>
 		</dict>
 		<dict>
 			<key>ActionIndex</key>

@@ -132,7 +132,8 @@
 | **3B** DeepSeek 请求 | 文本输入 → API → 通知输出 | ✅ 完成 |
 | **3C-1** OCR+DeepSeek 合体 | 截图 → OCR → DeepSeek JSON → 通知 | ✅ 完成 |
 | **3C-2** 替换 icost.vip | 3-full 中 icost.vip → DeepSeek，保持下游不变 | ✅ 初步通过 |
-| **3C-3** 精修：界面风格 + 时间精度 | 默认界面风格 3→1；CurrentDate 加时分 | 🔜 进行中 |
+| **3C-3** 精修：界面风格 + 时间精度 | 默认界面风格 3→1；CurrentDate 加时分 | ✅ 完成 |
+| **3C-4** 随机文字开关 | 配置 `显示随机文字` Boolean，conditional 包裹跳过 icost.vip API | ✅ 完成 |
 
 ---
 
