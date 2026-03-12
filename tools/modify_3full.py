@@ -39,11 +39,22 @@ UUID_RANDOM_END   = 'E6974843-33AE-4819-9651-6BC90DE5F949'
 UUID_KEY_DICT     = '29C441EE-B4F5-4A97-9435-A2E321437957'
 
 # === Generate new UUIDs ===
-NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in
-             ['ocr', 'body', 'clean', 'choices', 'first', 'content',
-              'show_random_getval', 'show_random_begin', 'show_random_else', 'show_random_end', 'show_random_group',
-              'notif_before', 'notif_after',
-              'cfg_url', 'cfg_model', 'cfg_maxtokens']}
+NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
+    'ocr', 'body', 'clean', 'choices', 'first', 'content',
+    'show_random_getval', 'show_random_begin', 'show_random_else',
+    'show_random_end', 'show_random_group',
+    'notif_before', 'notif_after',
+    # 配置读取
+    'cfg_platform', 'cfg_model', 'cfg_maxtokens', 'cfg_reasoning', 'cfg_debug',
+    # 平台调度
+    'url_label', 'resolved_url', 'key_label', 'resolved_key',
+    # 模型调度
+    'model_map', 'model_lookup',
+    'model_cond_group', 'model_cond_begin', 'model_cond_end', 'model_custom',
+    # 调试条件
+    'debug1_group', 'debug1_begin', 'debug1_end',
+    'debug2_group', 'debug2_begin', 'debug2_end',
+]}
 
 PH = '\ufffc'  # U+FFFC placeholder character
 
@@ -77,7 +88,9 @@ TEMPLATE = (
     '"},{"role":"user","content":"文字内容：\\n'
     + PH +
     '"}],"max_tokens":' + PH +
-    ',"temperature":0,"thinking":{"type":"disabled"}}'
+    ',"temperature":0'
+    ',"reasoning_effort":"' + PH +
+    '","thinking":{"type":"disabled"}}'
 )
 
 
@@ -216,13 +229,93 @@ def main():
     })
     print(f"  Fix 2a: Added '显示随机文字' = false to config dict")
 
-    # 2b: Update comment action text (append random text description)
+    # Fix 1e: Add 5 multi-platform config entries to 588A56AF
+    new_cfg_entries = [
+        ('平台',             0, {'string': '火山引擎'}),
+        ('模型',             3, {'string': '1'}),
+        ('max_tokens',       3, {'string': '300'}),
+        ('reasoning_effort', 0, {'string': 'minimal'}),
+        ('调试模式',         4, None),  # Boolean, value=False
+    ]
+    for key_name, item_type, value_dict in new_cfg_entries:
+        entry = {
+            'WFItemType': item_type,
+            'WFKey': {
+                'Value': {'string': key_name},
+                'WFSerializationType': 'WFTextTokenString'
+            },
+            'WFValue': {
+                'Value': value_dict if value_dict is not None else False,
+                'WFSerializationType': 'WFTextTokenString' if item_type != 4 else 'WFNumberSubstitutableState'
+            }
+        }
+        cfg_items.append(entry)
+        print(f"  Fix 1e: Added '{key_name}' to config dict")
+
+    # Fix 1f: Sync 5 new entries to ImportQuestions for config dict
+    for iq in data.get('WFWorkflowImportQuestions', []):
+        if iq.get('ActionIndex') == cfg_idx and iq.get('ParameterKey') == 'WFItems':
+            dv_items = iq['DefaultValue']['Value']['WFDictionaryFieldValueItems']
+            for key_name, item_type, value_dict in new_cfg_entries:
+                dv_items.append({
+                    'WFItemType': item_type,
+                    'WFKey': {
+                        'Value': {'string': key_name},
+                        'WFSerializationType': 'WFTextTokenString'
+                    },
+                    'WFValue': {
+                        'Value': value_dict if value_dict is not None else False,
+                        'WFSerializationType': 'WFTextTokenString' if item_type != 4 else 'WFNumberSubstitutableState'
+                    }
+                })
+            # Append Text description
+            iq['Text'] = iq['Text'].rstrip() + (
+                '\n🖥️ 平台：API 平台（填写: 火山引擎 / DeepSeek / 其他），默认火山引擎。'
+                '\n🤖 模型：选择编号'
+                '\n  1 = doubao-seed-2-0-mini-260215（默认）'
+                '\n  2 = deepseek-chat'
+                '\n  3 = doubao-seed-1-6-flash-250828'
+                '\n  4 = deepseek-v3-2-251201'
+                '\n  5 = 其他（需在密钥字典中填写「自定义模型」）'
+                '\n📏 max_tokens：最大输出 token 数，默认 300。'
+                '\n⚡ reasoning_effort：推理深度（填写: minimal / low / medium / high），默认 minimal。'
+                '\n🔧 调试模式：开启后在 API 调用前后弹出通知，用于排查问题。'
+            )
+            print(f"  Fix 1f: ImportQuestions synced for 5 new config entries")
+            break
+
+    # 2b: Update comment action text — prepend key dict guide + append config guide
     for action in actions:
         params = action.get('WFWorkflowActionParameters', {})
         comment = params.get('WFCommentActionText', '')
         if isinstance(comment, str) and '界面风格' in comment and '延迟截图' in comment:
-            params['WFCommentActionText'] = comment + \
-                '\n🎲 显示随机文字：是否在截图后弹出随机句子（弱智吧金句/诗词等），关闭可加快记账速度。'
+            key_dict_guide = (
+                '═══ 🔑 密钥与地址设置（上方词典）═══\n\n'
+                '在你使用的平台对应的「密钥」字段粘贴 API Key。\n'
+                '地址已预填，一般无需修改。\n\n'
+                '• 密钥(火山引擎)：火山引擎/豆包平台的 API Key\n'
+                '• 密钥(DeepSeek)：DeepSeek 平台的 API Key\n'
+                '• 密钥(其他)：自定义平台的 API Key\n'
+                '• 地址(其他)：自定义平台的 API 端点 URL\n'
+                '• 自定义模型：当「模型」设为 5 时填写模型名\n\n'
+                '⚠️ 请勿修改「开发者」「版本号」及预填地址。\n\n'
+                '═══ 📋 配置项说明（下方词典）═══\n\n'
+            )
+            config_guide = (
+                '\n🎲 显示随机文字：截图后弹出随机句子，关闭可加快记账速度。'
+                '\n\n─── 🌐 AI 识别配置 ───'
+                '\n🖥️ 平台：填写 火山引擎 / DeepSeek / 其他'
+                '\n🤖 模型：填写编号'
+                '\n  1 = doubao-seed-2-0-mini-260215（默认）'
+                '\n  2 = deepseek-chat'
+                '\n  3 = doubao-seed-1-6-flash-250828'
+                '\n  4 = deepseek-v3-2-251201'
+                '\n  5 = 其他（需在上方密钥字典中填写「自定义模型」）'
+                '\n📏 max_tokens：最大输出 token 数，默认 300'
+                '\n⚡ reasoning_effort：推理深度，填写 minimal / low / medium / high'
+                '\n🔧 调试模式：开启后 API 调用前后弹通知，用于排查问题'
+            )
+            params['WFCommentActionText'] = key_dict_guide + comment + config_guide
             print(f"  Fix 2b: Updated comment action text")
             break
 
@@ -296,16 +389,28 @@ def main():
     actions.insert(rand_start, W1)           # getvalueforkey
     print(f"  Fix 2c: Wrapped random text block [{rand_start}:{rand_end}] with conditional (+4 actions)")
 
-    # Fix 3: Add API config entries to key dict 29C441EE
+    # Fix 3: Rewrite key dict 29C441EE for multi-platform config
     key_idx = find_action_idx(actions, UUID_KEY_DICT)
     key_items = actions[key_idx]['WFWorkflowActionParameters']['WFItems']['Value']['WFDictionaryFieldValueItems']
-    api_cfg_entries = [
-        ('API地址', 0, {'string': 'https://api.deepseek.com/v1/chat/completions'}),
-        ('模型',   0, {'string': 'deepseek-chat'}),
-        ('max_tokens', 3, {'string': '300'}),
+
+    # 3a: Rename 密钥 → 密钥(火山引擎)
+    for item in key_items:
+        if item.get('WFKey', {}).get('Value', {}).get('string', '') == '密钥':
+            item['WFKey']['Value']['string'] = '密钥(火山引擎)'
+            print(f"  Fix 3a: Renamed '密钥' → '密钥(火山引擎)'")
+            break
+
+    # 3b: Append 6 new entries
+    new_key_entries = [
+        ('密钥(DeepSeek)', 0, {'string': ''}),
+        ('密钥(其他)',     0, {'string': ''}),
+        ('地址(火山引擎)', 0, {'string': 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'}),
+        ('地址(DeepSeek)', 0, {'string': 'https://api.deepseek.com/v1/chat/completions'}),
+        ('地址(其他)',     0, {'string': ''}),
+        ('自定义模型',     0, {'string': ''}),
     ]
-    for key_name, item_type, value_dict in api_cfg_entries:
-        entry = {
+    for key_name, item_type, value_dict in new_key_entries:
+        key_items.append({
             'WFItemType': item_type,
             'WFKey': {
                 'Value': {'string': key_name},
@@ -315,17 +420,20 @@ def main():
                 'Value': value_dict,
                 'WFSerializationType': 'WFTextTokenString'
             }
-        }
-        if item_type == 3:  # Number
-            entry['WFValue']['WFSerializationType'] = 'WFTextTokenString'
-        key_items.append(entry)
-        print(f"  Fix 3: Added '{key_name}' to key dict 29C441EE")
+        })
+        print(f"  Fix 3b: Added '{key_name}' to key dict")
 
-    # Fix 3b: Sync ImportQuestions for key dict
+    # 3c: Sync ImportQuestions for key dict
     for iq in data.get('WFWorkflowImportQuestions', []):
         if iq.get('ActionIndex') == key_idx and iq.get('ParameterKey') == 'WFItems':
             dv_items = iq['DefaultValue']['Value']['WFDictionaryFieldValueItems']
-            for key_name, item_type, value_dict in api_cfg_entries:
+            # Rename 密钥 → 密钥(火山引擎) in DefaultValue
+            for dv_item in dv_items:
+                if dv_item.get('WFKey', {}).get('Value', {}).get('string', '') == '密钥':
+                    dv_item['WFKey']['Value']['string'] = '密钥(火山引擎)'
+                    break
+            # Append same 6 entries
+            for key_name, item_type, value_dict in new_key_entries:
                 dv_items.append({
                     'WFItemType': item_type,
                     'WFKey': {
@@ -337,10 +445,19 @@ def main():
                         'WFSerializationType': 'WFTextTokenString'
                     }
                 })
-            # Update Text description
-            iq['Text'] = iq['Text'].rstrip() + \
-                '\n\n🌐 API地址：API 端点 URL\n🤖 模型：模型名称\n📏 max_tokens：最大输出 token 数'
-            print(f"  Fix 3b: ImportQuestions synced for key dict")
+            # Update Text
+            iq['Text'] = (
+                '🔑 API 密钥与地址配置\n\n'
+                '在你使用的平台对应的「密钥」字段粘贴 API Key。\n'
+                '地址已预填，一般无需修改。\n\n'
+                '• 密钥(火山引擎)：火山引擎/豆包平台的 API Key\n'
+                '• 密钥(DeepSeek)：DeepSeek 平台的 API Key\n'
+                '• 密钥(其他)：自定义平台的 API Key\n'
+                '• 地址(其他)：自定义平台的 API 端点 URL\n'
+                '• 自定义模型：当「模型」设为 5 时，在此填写模型名\n\n'
+                '⚠️ 请勿修改「开发者」「版本号」及预填地址。'
+            )
+            print(f"  Fix 3c: ImportQuestions synced for key dict")
             break
 
     # Find key action indices
@@ -353,8 +470,8 @@ def main():
 
     # Calculate placeholder positions in template
     pos = find_positions(TEMPLATE, PH)
-    assert len(pos) == 10, f"Expected 10 placeholders, got {len(pos)}"
-    labels = ['模型', '当前日期', '支出分类', '支出子分类', '收入分类', '账户', '标签', '自定义规则', 'OCR文本', 'max_tokens']
+    assert len(pos) == 11, f"Expected 11 placeholders, got {len(pos)}"
+    labels = ['模型', '当前日期', '支出分类', '支出子分类', '收入分类', '账户', '标签', '自定义规则', 'OCR文本', 'max_tokens', 'reasoning_effort']
     print("\nPlaceholder positions:")
     for i, p in enumerate(pos):
         print(f"  ￼{i+1} {labels[i]}: {{{p}, 1}}")
@@ -403,11 +520,10 @@ def main():
     # A2: gettext (build DeepSeek JSON body with 10 ￼ placeholders)
     attachments = {}
 
-    # ￼1: 模型 (from config)
+    # ￼1: 模型 (Variable "model" — set by Phase 2 model dispatch)
     attachments[f'{{{pos[0]}, 1}}'] = {
-        'OutputName': '词典值',
-        'OutputUUID': NEW_UUIDS['cfg_model'],
-        'Type': 'ActionOutput'
+        'Type': 'Variable',
+        'VariableName': 'model'
     }
 
     # ￼2: CurrentDate (yyyy-MM-dd HH:mm format, with time precision)
@@ -439,10 +555,17 @@ def main():
         'Type': 'ActionOutput'
     }
 
-    # ￼10: max_tokens (from config)
+    # ￼10: max_tokens (from config S3)
     attachments[f'{{{pos[9]}, 1}}'] = {
         'OutputName': '词典值',
         'OutputUUID': NEW_UUIDS['cfg_maxtokens'],
+        'Type': 'ActionOutput'
+    }
+
+    # ￼11: reasoning_effort (from config S4)
+    attachments[f'{{{pos[10]}, 1}}'] = {
+        'OutputName': '词典值',
+        'OutputUUID': NEW_UUIDS['cfg_reasoning'],
         'Type': 'ActionOutput'
     }
 
@@ -497,7 +620,7 @@ def main():
                     'attachmentsByRange': {
                         '{0, 1}': {
                             'OutputName': '词典值',
-                            'OutputUUID': NEW_UUIDS['cfg_url'],
+                            'OutputUUID': NEW_UUIDS['resolved_url'],
                             'Type': 'ActionOutput'
                         }
                     },
@@ -519,7 +642,7 @@ def main():
                                     'attachmentsByRange': {
                                         '{7, 1}': {
                                             'OutputName': '词典值',
-                                            'OutputUUID': UUID_API_KEY,
+                                            'OutputUUID': NEW_UUIDS['resolved_key'],
                                             'Type': 'ActionOutput'
                                         }
                                     },
@@ -616,16 +739,347 @@ def main():
         'WFSerializationType': 'WFTextTokenAttachment'
     }
 
-    # N1: notification before DeepSeek call
+    # === Phase 0: Read config from 588A56AF (5 actions) ===
+    def make_cfg_read(uuid_key, dict_key):
+        return {
+            'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+            'WFWorkflowActionParameters': {
+                'UUID': NEW_UUIDS[uuid_key],
+                'WFDictionaryKey': dict_key,
+                'WFInput': {
+                    'Value': {
+                        'OutputName': '词典',
+                        'OutputUUID': UUID_CONFIG_DICT,
+                        'Type': 'ActionOutput'
+                    },
+                    'WFSerializationType': 'WFTextTokenAttachment'
+                }
+            }
+        }
+
+    S1 = make_cfg_read('cfg_platform', '平台')
+    S2 = make_cfg_read('cfg_model', '模型')
+    S3 = make_cfg_read('cfg_maxtokens', 'max_tokens')
+    S4 = make_cfg_read('cfg_reasoning', 'reasoning_effort')
+    S5 = make_cfg_read('cfg_debug', '调试模式')
+
+    # === Phase 1: Platform dispatch — dynamic dict lookup (4 actions) ===
+
+    # T_URL: gettext "地址(￼)" where ￼ = S1 platform name
+    T_URL = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.gettext',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['url_label'],
+            'WFTextActionText': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{3, 1}': {
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_platform'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': f'地址({PH})'
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            }
+        }
+    }
+
+    # R_URL: getvalueforkey [T_URL output] from 29C441EE → resolved URL
+    R_URL = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['resolved_url'],
+            'WFDictionaryKey': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{0, 1}': {
+                            'OutputName': 'Text',
+                            'OutputUUID': NEW_UUIDS['url_label'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': PH
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            },
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典',
+                    'OutputUUID': UUID_KEY_DICT,
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # T_KEY: gettext "密钥(￼)" where ￼ = S1 platform name
+    T_KEY = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.gettext',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['key_label'],
+            'WFTextActionText': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{3, 1}': {
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_platform'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': f'密钥({PH})'
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            }
+        }
+    }
+
+    # R_KEY: getvalueforkey [T_KEY output] from 29C441EE → resolved API key
+    R_KEY = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['resolved_key'],
+            'WFDictionaryKey': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{0, 1}': {
+                            'OutputName': 'Text',
+                            'OutputUUID': NEW_UUIDS['key_label'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': PH
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            },
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典',
+                    'OutputUUID': UUID_KEY_DICT,
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # === Phase 2: Model dispatch — number mapping (7 actions) ===
+
+    MODEL_MAP = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.dictionary',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['model_map'],
+            'WFItems': {
+                'Value': {
+                    'WFDictionaryFieldValueItems': [
+                        {
+                            'WFItemType': 0,
+                            'WFKey': {'Value': {'string': '1'}, 'WFSerializationType': 'WFTextTokenString'},
+                            'WFValue': {'Value': {'string': 'doubao-seed-2-0-mini-260215'}, 'WFSerializationType': 'WFTextTokenString'}
+                        },
+                        {
+                            'WFItemType': 0,
+                            'WFKey': {'Value': {'string': '2'}, 'WFSerializationType': 'WFTextTokenString'},
+                            'WFValue': {'Value': {'string': 'deepseek-chat'}, 'WFSerializationType': 'WFTextTokenString'}
+                        },
+                        {
+                            'WFItemType': 0,
+                            'WFKey': {'Value': {'string': '3'}, 'WFSerializationType': 'WFTextTokenString'},
+                            'WFValue': {'Value': {'string': 'doubao-seed-1-6-flash-250828'}, 'WFSerializationType': 'WFTextTokenString'}
+                        },
+                        {
+                            'WFItemType': 0,
+                            'WFKey': {'Value': {'string': '4'}, 'WFSerializationType': 'WFTextTokenString'},
+                            'WFValue': {'Value': {'string': 'deepseek-v3-2-251201'}, 'WFSerializationType': 'WFTextTokenString'}
+                        },
+                    ]
+                },
+                'WFSerializationType': 'WFDictionaryFieldValue'
+            }
+        }
+    }
+
+    # MODEL_LOOKUP: getvalueforkey [S2] from MODEL_MAP → model name (dynamic key)
+    MODEL_LOOKUP = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['model_lookup'],
+            'WFDictionaryKey': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{0, 1}': {
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_model'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': PH
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            },
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典',
+                    'OutputUUID': NEW_UUIDS['model_map'],
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # SV_MODEL_DEFAULT: setvariable "model" = MODEL_LOOKUP output
+    SV_MODEL_DEFAULT = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.setvariable',
+        'WFWorkflowActionParameters': {
+            'WFVariableName': 'model',
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典值',
+                    'OutputUUID': NEW_UUIDS['model_lookup'],
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # MC_BEGIN: conditional (S2 as Number ≥ 5) — custom model branch
+    # Use WFCondition=4 (≥) which is verified for number mode. Model 1-4 skip, 5+ enters.
+    MC_BEGIN = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+        'WFWorkflowActionParameters': {
+            'GroupingIdentifier': NEW_UUIDS['model_cond_group'],
+            'UUID': NEW_UUIDS['model_cond_begin'],
+            'WFCondition': 4,                         # ≥ (number mode, verified)
+            'WFNumberValue': '5',
+            'WFControlFlowMode': 0,                   # BEGIN
+            'WFInput': {
+                'Type': 'Variable',
+                'Variable': {
+                    'Value': {
+                        'Aggrandizements': [{
+                            'CoercionItemClass': 'WFNumberContentItem',
+                            'Type': 'WFCoercionVariableAggrandizement'
+                        }],
+                        'OutputName': '词典值',
+                        'OutputUUID': NEW_UUIDS['cfg_model'],
+                        'Type': 'ActionOutput'
+                    },
+                    'WFSerializationType': 'WFTextTokenAttachment'
+                }
+            }
+        }
+    }
+
+    # MC_CUSTOM: getvalueforkey "自定义模型" from 29C441EE
+    MC_CUSTOM = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+        'WFWorkflowActionParameters': {
+            'UUID': NEW_UUIDS['model_custom'],
+            'WFDictionaryKey': '自定义模型',
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典',
+                    'OutputUUID': UUID_KEY_DICT,
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # SV_MODEL_OVERRIDE: setvariable "model" = MC_CUSTOM output
+    SV_MODEL_OVERRIDE = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.setvariable',
+        'WFWorkflowActionParameters': {
+            'WFVariableName': 'model',
+            'WFInput': {
+                'Value': {
+                    'OutputName': '词典值',
+                    'OutputUUID': NEW_UUIDS['model_custom'],
+                    'Type': 'ActionOutput'
+                },
+                'WFSerializationType': 'WFTextTokenAttachment'
+            }
+        }
+    }
+
+    # MC_END: conditional END (no ELSE)
+    MC_END = {
+        'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+        'WFWorkflowActionParameters': {
+            'GroupingIdentifier': NEW_UUIDS['model_cond_group'],
+            'UUID': NEW_UUIDS['model_cond_end'],
+            'WFControlFlowMode': 2                    # END
+        }
+    }
+
+    # === Phase 4: Debug notification BEFORE API call (3 actions) ===
+
+    def make_debug_cond(group_key, uuid_key, mode):
+        d = {
+            'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
+            'WFWorkflowActionParameters': {
+                'GroupingIdentifier': NEW_UUIDS[group_key],
+                'UUID': NEW_UUIDS[uuid_key],
+                'WFControlFlowMode': mode,
+            }
+        }
+        if mode == 0:  # BEGIN
+            d['WFWorkflowActionParameters'].update({
+                'WFCondition': 4,                     # ≥
+                'WFInput': {
+                    'Type': 'Variable',
+                    'Variable': {
+                        'Value': {
+                            'Aggrandizements': [{
+                                'CoercionItemClass': 'WFNumberContentItem',
+                                'Type': 'WFCoercionVariableAggrandizement'
+                            }],
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_debug'],
+                            'Type': 'ActionOutput'
+                        },
+                        'WFSerializationType': 'WFTextTokenAttachment'
+                    }
+                },
+                'WFNumberValue': '1'
+            })
+        return d
+
+    DB1_BEGIN = make_debug_cond('debug1_group', 'debug1_begin', 0)
+    DB1_END   = make_debug_cond('debug1_group', 'debug1_end', 2)
+
+    # N1: notification "⏳ 正在调用 {平台} API..." (embed S1 platform name)
     N1 = {
         'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
         'WFWorkflowActionParameters': {
             'UUID': NEW_UUIDS['notif_before'],
-            'WFNotificationActionBody': '⏳ 正在调用 DeepSeek...'
+            'WFNotificationActionBody': {
+                'Value': {
+                    'attachmentsByRange': {
+                        '{7, 1}': {
+                            'OutputName': '词典值',
+                            'OutputUUID': NEW_UUIDS['cfg_platform'],
+                            'Type': 'ActionOutput'
+                        }
+                    },
+                    'string': f'⏳ 正在调用 {PH} API...'
+                },
+                'WFSerializationType': 'WFTextTokenString'
+            }
         }
     }
 
-    # N2: notification after DeepSeek call — show raw response for debugging
+    # === Phase 6: Debug notification AFTER API call (3 actions) ===
+
+    DB2_BEGIN = make_debug_cond('debug2_group', 'debug2_begin', 0)
+    DB2_END   = make_debug_cond('debug2_group', 'debug2_end', 2)
+
+    # N2: notification showing raw response for debugging
     N2 = {
         'WFWorkflowActionIdentifier': 'is.workflow.actions.notification',
         'WFWorkflowActionParameters': {
@@ -646,35 +1100,30 @@ def main():
         }
     }
 
-    # GV1/GV2/GV3: read API config from key dict 29C441EE
-    def make_gv(uuid_key, dict_key):
-        return {
-            'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
-            'WFWorkflowActionParameters': {
-                'UUID': NEW_UUIDS[uuid_key],
-                'WFDictionaryKey': dict_key,
-                'WFInput': {
-                    'Value': {
-                        'OutputName': '词典',
-                        'OutputUUID': UUID_KEY_DICT,
-                        'Type': 'ActionOutput'
-                    },
-                    'WFSerializationType': 'WFTextTokenAttachment'
-                }
-            }
-        }
-
-    GV1 = make_gv('cfg_url', 'API地址')
-    GV2 = make_gv('cfg_model', '模型')
-    GV3 = make_gv('cfg_maxtokens', 'max_tokens')
-
     # === Apply modifications ===
-    # Replace 2 original actions (downloadurl + detect.dictionary) with 13 new actions
-    new_actions = [GV1, GV2, GV3, A1, A2, A3, N1, B, N2, C1, C2, C3, D]
+    # Replace 2 original actions with 30 new actions
+    new_actions = [
+        # Phase 0: read config (5)
+        S1, S2, S3, S4, S5,
+        # Phase 1: platform dispatch (4)
+        T_URL, R_URL, T_KEY, R_KEY,
+        # Phase 2: model dispatch (7)
+        MODEL_MAP, MODEL_LOOKUP, SV_MODEL_DEFAULT, MC_BEGIN, MC_CUSTOM, SV_MODEL_OVERRIDE, MC_END,
+        # Phase 3: OCR + JSON body (3)
+        A1, A2, A3,
+        # Phase 4: debug notification before (3)
+        DB1_BEGIN, N1, DB1_END,
+        # Phase 5: API call (1)
+        B,
+        # Phase 6: debug notification after (3)
+        DB2_BEGIN, N2, DB2_END,
+        # Phase 7: parse response (4)
+        C1, C2, C3, D
+    ]
     actions[dl_idx:dd_idx + 1] = new_actions
 
     print(f"\nReplaced actions[{dl_idx}:{dd_idx+1}] with {len(new_actions)} new actions")
-    print(f"  Total actions: {len(actions)} (was {len(actions) - 11})")
+    print(f"  Total actions: {len(actions)} (was {len(actions) - 28})")
 
     # === Save output ===
     with open(OUTPUT, 'wb') as f:
@@ -688,16 +1137,19 @@ def main():
     # Verification: check template integrity in saved file
     saved = plistlib.loads(OUTPUT.read_bytes())
     saved_actions = saved['WFWorkflowActions']
-    gettext_action = saved_actions[dl_idx + 4]  # A2 is at dl_idx + 4 (after GV1/GV2/GV3/A1)
+    # A2 is at index: dl_idx + 5(S1-S5) + 4(T/R_URL/KEY) + 7(model) + 1(A1) = dl_idx + 17
+    a2_idx = dl_idx + 17
+    gettext_action = saved_actions[a2_idx]
     saved_template = gettext_action['WFWorkflowActionParameters']['WFTextActionText']['Value']['string']
     saved_attachments = gettext_action['WFWorkflowActionParameters']['WFTextActionText']['Value']['attachmentsByRange']
     n_ph = saved_template.count(PH)
     n_att = len(saved_attachments)
     print(f"\nVerification:")
-    print(f"  Template placeholders: {n_ph} (expected 10)")
-    print(f"  Attachments: {n_att} (expected 10)")
-    assert n_ph == 10, f"Template has {n_ph} placeholders, expected 10"
-    assert n_att == 10, f"Template has {n_att} attachments, expected 10"
+    print(f"  A2 (gettext) at index {a2_idx}")
+    print(f"  Template placeholders: {n_ph} (expected 11)")
+    print(f"  Attachments: {n_att} (expected 11)")
+    assert n_ph == 11, f"Template has {n_ph} placeholders, expected 11"
+    assert n_att == 11, f"Template has {n_att} attachments, expected 11"
     print("  ✓ All checks passed")
 
 

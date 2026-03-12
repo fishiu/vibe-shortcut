@@ -6,7 +6,7 @@
 
 1. **调试模式** — Boolean 开关，默认关闭。关闭时跳过 API 前后的通知。
 2. **平台选择** — 火山引擎(默认) / DeepSeek / 其他。根据选择自动应用对应 URL 和密钥。
-3. **模型选择** — 预设 5 个模型名 + 其他（自定义）。
+3. **模型选择** — 编号制（1-5），内置映射字典自动解析模型名，用户无需手打。
 4. **reasoning_effort** — minimal(默认) / low / medium / high。
 
 ## 2. 核心设计决策
@@ -24,13 +24,17 @@ getvalueforkey [动态key] from 密钥字典 → 取值
 
 密钥字典中按 `密钥(平台名)` / `地址(平台名)` 的命名规律存储，运行时拼接查找。
 
-### 2.2 命名变量共享数据
+### 2.2 内置映射字典（模型编号 → 模型名）
+
+用户在配置中填数字编号（1-5），运行时通过一个**内置的 dictionary action**（hardcoded，用户不可见）映射为真实模型名。避免用户手打 `doubao-seed-2-0-mini-260215` 这类长字符串。
+
+### 2.3 命名变量共享数据
 
 模型调度有"其他"分支，需 conditional。用 `setvariable` 在分支间共享结果（无 `getvariable` action，下游用 `{Type: "Variable", VariableName: "model"}` 引用）。
 
-### 2.3 无 Dropdown UI
+### 2.4 无 Dropdown UI
 
-Shortcuts 配置界面只有 文本/数字/布尔 字段，没有下拉选择。"选择题"通过 ImportQuestions Text 描述文字引导用户填写正确值。
+Shortcuts 配置界面只有 文本/数字/布尔 字段，没有下拉选择。平台和 reasoning_effort 通过 ImportQuestions Text 描述文字引导用户填写；模型用编号制降低出错概率。
 
 ---
 
@@ -51,14 +55,14 @@ Shortcuts 配置界面只有 文本/数字/布尔 字段，没有下拉选择。
 | `地址(火山引擎)` | 0 (Text) | `https://ark.cn-beijing.volces.com/api/v3/chat/completions` | 预填，一般无需修改 |
 | `地址(DeepSeek)` | 0 (Text) | `https://api.deepseek.com/v1/chat/completions` | 预填，一般无需修改 |
 | `地址(其他)` | 0 (Text) | `""` (空) | 用户自填 |
-| `自定义模型` | 0 (Text) | `""` (空) | 仅当 模型="其他" 时使用 |
+| `自定义模型` | 0 (Text) | `""` (空) | 仅当 模型=5 时使用 |
 
 ### 3.3 删除（不再添加）3C-6 条目
 
 以下 3C-6 新增的条目不再添加（被本方案替代）：
 
 - ~~`API地址`~~ → 被 `地址(平台名)` 替代
-- ~~`模型`~~ → 移到配置字典 588A56AF
+- ~~`模型`~~ → 移到配置字典 588A56AF（编号制）
 - ~~`max_tokens`~~ → 移到配置字典 588A56AF
 
 ### 3.4 实现方式
@@ -90,50 +94,24 @@ new_key_entries = [
 | Key | WFItemType | 默认值 | 说明 |
 |-----|-----------|--------|------|
 | `平台` | 0 (Text) | `"火山引擎"` | 可选: 火山引擎 / DeepSeek / 其他 |
-| `模型` | 0 (Text) | `"doubao-seed-2-0-mini-260215"` | 可选: doubao-seed-2-0-mini-260215 / deepseek-chat / doubao-seed-1-6-flash-250828 / deepseek-v3-2-251201 / 其他 |
+| `模型` | 3 (Number) | `"1"` | 编号: 1-4=预设模型, 5=其他（见 §5 Phase 2 映射表） |
 | `max_tokens` | 3 (Number) | `"300"` | 最大输出 token 数 |
 | `reasoning_effort` | 0 (Text) | `"minimal"` | 可选: minimal / low / medium / high |
 | `调试模式` | 4 (Boolean) | `false` | 开启后 API 调用前后弹通知 |
 
-每项的 Python dict 结构与已有的 `显示随机文字` 同模式：
+Python dict 结构示例：
 
 ```python
-# Text 类型示例
-{
-    'WFItemType': 0,
-    'WFKey': {
-        'Value': {'string': '平台'},
-        'WFSerializationType': 'WFTextTokenString'
-    },
-    'WFValue': {
-        'Value': {'string': '火山引擎'},
-        'WFSerializationType': 'WFTextTokenString'
-    }
-}
-
-# Number 类型
+# Number 类型 (模型编号)
 {
     'WFItemType': 3,
     'WFKey': {
-        'Value': {'string': 'max_tokens'},
+        'Value': {'string': '模型'},
         'WFSerializationType': 'WFTextTokenString'
     },
     'WFValue': {
-        'Value': {'string': '300'},
+        'Value': {'string': '1'},
         'WFSerializationType': 'WFTextTokenString'
-    }
-}
-
-# Boolean 类型
-{
-    'WFItemType': 4,
-    'WFKey': {
-        'Value': {'string': '调试模式'},
-        'WFSerializationType': 'WFTextTokenString'
-    },
-    'WFValue': {
-        'Value': False,
-        'WFSerializationType': 'WFNumberSubstitutableState'
     }
 }
 ```
@@ -142,7 +120,7 @@ new_key_entries = [
 
 ## 5. 运行时 Action 链设计
 
-替换当前 `new_actions`（13 action）为新的 28 action 链。
+替换当前 `new_actions`（13 action）为新的 30 action 链。
 
 ### 完整 action 列表
 
@@ -152,8 +130,8 @@ new_actions = [
     S1, S2, S3, S4, S5,
     # Phase 1: 平台调度 — URL + 密钥 (4)
     T_URL, R_URL, T_KEY, R_KEY,
-    # Phase 2: 模型调度 (4)
-    SV_MODEL_DEFAULT, MC_BEGIN, MC_CUSTOM, SV_MODEL_OVERRIDE, MC_END,
+    # Phase 2: 模型调度 — 编号映射 (7)
+    MODEL_MAP, MODEL_LOOKUP, SV_MODEL_DEFAULT, MC_BEGIN, MC_CUSTOM, SV_MODEL_OVERRIDE, MC_END,
     # Phase 3: OCR + JSON body (3)
     A1, A2, A3,
     # Phase 4: 调试通知(前) (3)
@@ -165,7 +143,7 @@ new_actions = [
     # Phase 7: 解析响应 (4)
     C1, C2, C3, D
 ]
-# Total: 5 + 4 + 5 + 3 + 3 + 1 + 3 + 4 = 28 actions
+# Total: 5 + 4 + 7 + 3 + 3 + 1 + 3 + 4 = 30 actions
 ```
 
 ### Phase 0: 读取配置 (5 actions)
@@ -253,9 +231,11 @@ R_URL = {
     }
 }
 
-# T_KEY, R_KEY: 同理，key 名模式 "密钥(￼)"
-# T_KEY 的 string = '密钥(￼)'，attachment 位置 = {2, 1}（"密钥(" 是 2 个字符）
-# R_KEY 同 R_URL 结构，WFInput 指向 UUID_KEY_DICT
+# T_KEY: gettext "密钥(￼)" → "密钥(火山引擎)"
+# 同 T_URL 结构，string = '密钥(￼)'，attachment 位置 = {3, 1}
+
+# R_KEY: getvalueforkey [T_KEY output] from 29C441EE → resolved API key
+# 同 R_URL 结构
 ```
 
 **位置计算**:
@@ -264,20 +244,82 @@ R_URL = {
 
 > ⚠️ **风险**: 动态 WFDictionaryKey 在 3-full.xml line 1666 已验证可用。但若 iPhone 行为不一致，回退方案见 §5.9。
 
-### Phase 2: 模型调度 (5 actions)
+### Phase 2: 模型调度 — 编号映射 (7 actions)
 
-先设默认值（S2 直接作为模型名），再用条件覆盖"其他"情况：
+#### 模型编号映射表
+
+| 编号 | 模型名 |
+|------|--------|
+| 1 | `doubao-seed-2-0-mini-260215`（默认） |
+| 2 | `deepseek-chat` |
+| 3 | `doubao-seed-1-6-flash-250828` |
+| 4 | `deepseek-v3-2-251201` |
+| 5 | 其他（读取密钥字典中的「自定义模型」字段） |
+
+#### Action 链
 
 ```python
-# SV_MODEL_DEFAULT: setvariable "model" = S2 (默认：S2 的值就是模型名)
-SV_MODEL_DEFAULT = {
-    'WFWorkflowActionIdentifier': 'is.workflow.actions.setvariable',
+# MODEL_MAP: 内置映射字典（hardcoded，用户不可见）
+MODEL_MAP = {
+    'WFWorkflowActionIdentifier': 'is.workflow.actions.dictionary',
     'WFWorkflowActionParameters': {
-        'WFVariableName': 'model',
+        'UUID': NEW_UUIDS['model_map'],
+        'WFItems': {
+            'Value': {
+                'WFDictionaryFieldValueItems': [
+                    # key "1" → "doubao-seed-2-0-mini-260215"
+                    {
+                        'WFItemType': 0,
+                        'WFKey': {'Value': {'string': '1'}, 'WFSerializationType': 'WFTextTokenString'},
+                        'WFValue': {'Value': {'string': 'doubao-seed-2-0-mini-260215'}, 'WFSerializationType': 'WFTextTokenString'}
+                    },
+                    # key "2" → "deepseek-chat"
+                    {
+                        'WFItemType': 0,
+                        'WFKey': {'Value': {'string': '2'}, 'WFSerializationType': 'WFTextTokenString'},
+                        'WFValue': {'Value': {'string': 'deepseek-chat'}, 'WFSerializationType': 'WFTextTokenString'}
+                    },
+                    # key "3" → "doubao-seed-1-6-flash-250828"
+                    {
+                        'WFItemType': 0,
+                        'WFKey': {'Value': {'string': '3'}, 'WFSerializationType': 'WFTextTokenString'},
+                        'WFValue': {'Value': {'string': 'doubao-seed-1-6-flash-250828'}, 'WFSerializationType': 'WFTextTokenString'}
+                    },
+                    # key "4" → "deepseek-v3-2-251201"
+                    {
+                        'WFItemType': 0,
+                        'WFKey': {'Value': {'string': '4'}, 'WFSerializationType': 'WFTextTokenString'},
+                        'WFValue': {'Value': {'string': 'deepseek-v3-2-251201'}, 'WFSerializationType': 'WFTextTokenString'}
+                    },
+                ]
+            },
+            'WFSerializationType': 'WFDictionaryFieldValue'
+        }
+    }
+}
+
+# MODEL_LOOKUP: getvalueforkey [S2] from MODEL_MAP → 模型名（动态 key）
+MODEL_LOOKUP = {
+    'WFWorkflowActionIdentifier': 'is.workflow.actions.getvalueforkey',
+    'WFWorkflowActionParameters': {
+        'UUID': NEW_UUIDS['model_lookup'],
+        'WFDictionaryKey': {
+            'Value': {
+                'attachmentsByRange': {
+                    '{0, 1}': {
+                        'OutputName': '词典值',
+                        'OutputUUID': NEW_UUIDS['cfg_model'],   # S2 的输出
+                        'Type': 'ActionOutput'
+                    }
+                },
+                'string': PH
+            },
+            'WFSerializationType': 'WFTextTokenString'
+        },
         'WFInput': {
             'Value': {
-                'OutputName': '词典值',
-                'OutputUUID': NEW_UUIDS['cfg_model'],
+                'OutputName': '词典',
+                'OutputUUID': NEW_UUIDS['model_map'],           # MODEL_MAP 的输出
                 'Type': 'ActionOutput'
             },
             'WFSerializationType': 'WFTextTokenAttachment'
@@ -285,21 +327,39 @@ SV_MODEL_DEFAULT = {
     }
 }
 
-# MC_BEGIN: conditional (S2 text== "其他")
+# SV_MODEL_DEFAULT: setvariable "model" = MODEL_LOOKUP 输出（编号 1-4 直接命中）
+SV_MODEL_DEFAULT = {
+    'WFWorkflowActionIdentifier': 'is.workflow.actions.setvariable',
+    'WFWorkflowActionParameters': {
+        'WFVariableName': 'model',
+        'WFInput': {
+            'Value': {
+                'OutputName': '词典值',
+                'OutputUUID': NEW_UUIDS['model_lookup'],
+                'Type': 'ActionOutput'
+            },
+            'WFSerializationType': 'WFTextTokenAttachment'
+        }
+    }
+}
+
+# MC_BEGIN: conditional (S2 ≥ 5)
+# 编号 5 在 MODEL_MAP 中无对应 → lookup 返空 → 需读自定义模型
+# ⚠️ 原设计用 WFCondition=0 文本等于，iPhone 实测仍按数值解析为"小于"
+# 修正为 WFCondition=4（≥5），编号 1-4 不满足跳过，编号 5 进入自定义分支
 MC_BEGIN = {
     'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
     'WFWorkflowActionParameters': {
         'GroupingIdentifier': NEW_UUIDS['model_cond_group'],
         'UUID': NEW_UUIDS['model_cond_begin'],
-        'WFCondition': 0,                        # text equals
-        'WFConditionalActionString': '其他',
+        'WFCondition': 4,                        # ≥ (数值模式)
         'WFControlFlowMode': 0,                   # BEGIN
         'WFInput': {
             'Type': 'Variable',
             'Variable': {
                 'Value': {
                     'Aggrandizements': [{
-                        'CoercionItemClass': 'WFStringContentItem',
+                        'CoercionItemClass': 'WFNumberContentItem',
                         'Type': 'WFCoercionVariableAggrandizement'
                     }],
                     'OutputName': '词典值',
@@ -308,7 +368,8 @@ MC_BEGIN = {
                 },
                 'WFSerializationType': 'WFTextTokenAttachment'
             }
-        }
+        },
+        'WFNumberValue': '5'
     }
 }
 
@@ -329,7 +390,7 @@ MC_CUSTOM = {
     }
 }
 
-# SV_MODEL_OVERRIDE: setvariable "model" = MC_CUSTOM output (覆盖默认值)
+# SV_MODEL_OVERRIDE: setvariable "model" = MC_CUSTOM output (覆盖默认空值)
 SV_MODEL_OVERRIDE = {
     'WFWorkflowActionIdentifier': 'is.workflow.actions.setvariable',
     'WFWorkflowActionParameters': {
@@ -345,7 +406,7 @@ SV_MODEL_OVERRIDE = {
     }
 }
 
-# MC_END: conditional END（无 ELSE — 非 "其他" 时 model 保持默认值）
+# MC_END: conditional END（无 ELSE — 编号 1-4 时 model 已由 lookup 赋值）
 MC_END = {
     'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
     'WFWorkflowActionParameters': {
@@ -356,7 +417,9 @@ MC_END = {
 }
 ```
 
-**为什么不需要 ELSE**: 先执行 `setvariable "model" = S2`（用户选择的值），只有当 S2 == "其他" 时才进入 conditional 覆盖为自定义模型名。其他情况 model 变量已经是正确的模型名。
+**工作原理**:
+- 编号 1-4: `MODEL_LOOKUP` 从映射字典命中真实模型名 → `setvariable "model"` 生效 → conditional 不触发
+- 编号 5: `MODEL_LOOKUP` 返空（映射字典无 key "5"）→ `setvariable "model"` 设为空 → conditional 触发 → 从密钥字典读 `自定义模型` 覆盖
 
 ### Phase 3: OCR + JSON body (3 actions)
 
@@ -498,40 +561,26 @@ pos 断言从 `assert len(pos) == 10` 改为 `assert len(pos) == 11`。
 ### WFURL
 
 ```python
-# 旧: 引用 cfg_url 的 OutputUUID
+# 新: 引用 R_URL (resolved_url) 的 OutputUUID
 'WFURL': {
     'Value': {
         'attachmentsByRange': {
             '{0, 1}': {
                 'OutputName': '词典值',
-                'OutputUUID': NEW_UUIDS['cfg_url'],     # ← 旧 key
-                ...
+                'OutputUUID': NEW_UUIDS['resolved_url'],
+                'Type': 'ActionOutput'
             }
         },
         'string': PH
     },
     'WFSerializationType': 'WFTextTokenString'
 }
-
-# 新: 引用 R_URL (resolved_url) 的 OutputUUID
-'{0, 1}': {
-    'OutputName': '词典值',
-    'OutputUUID': NEW_UUIDS['resolved_url'],     # ← 新 key
-    'Type': 'ActionOutput'
-}
 ```
 
 ### Authorization Header
 
 ```python
-# 旧: 引用 UUID_API_KEY (D625BA13，原 shortcut 的固定 getvalueforkey)
-'{7, 1}': {
-    'OutputName': '词典值',
-    'OutputUUID': UUID_API_KEY,
-    'Type': 'ActionOutput'
-}
-
-# 新: 引用 R_KEY (resolved_key)
+# 新: 引用 R_KEY (resolved_key)，不再引用 UUID_API_KEY (D625BA13)
 '{7, 1}': {
     'OutputName': '词典值',
     'OutputUUID': NEW_UUIDS['resolved_key'],
@@ -555,11 +604,12 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
     'show_random_getval', 'show_random_begin', 'show_random_else',
     'show_random_end', 'show_random_group',
     'notif_before', 'notif_after',
-    # 替换 cfg_url/cfg_model/cfg_maxtokens
+    # 配置读取 (替换 cfg_url/cfg_model/cfg_maxtokens)
     'cfg_platform', 'cfg_model', 'cfg_maxtokens', 'cfg_reasoning', 'cfg_debug',
     # 平台调度
     'url_label', 'resolved_url', 'key_label', 'resolved_key',
     # 模型调度
+    'model_map', 'model_lookup',
     'model_cond_group', 'model_cond_begin', 'model_cond_end', 'model_custom',
     # 调试条件
     'debug1_group', 'debug1_begin', 'debug1_end',
@@ -584,11 +634,11 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 ### 8.5 new_actions 重建
 
 从 `[GV1, GV2, GV3, A1, A2, A3, N1, B, N2, C1, C2, C3, D]` (13)
-改为 `[S1..S5, T_URL, R_URL, T_KEY, R_KEY, SV_MODEL_DEFAULT, MC_BEGIN, MC_CUSTOM, SV_MODEL_OVERRIDE, MC_END, A1, A2, A3, DB1_BEGIN, N1, DB1_END, B, DB2_BEGIN, N2, DB2_END, C1, C2, C3, D]` (28)
+改为 30 action 链（见 §5 完整列表）
 
 ### 8.6 A2 attachment 映射
 
-- ￼1 改为 Variable 引用
+- ￼1 改为 Variable "model" 引用
 - 新增 ￼11 (reasoning_effort → S4)
 
 ### 8.7 downloadurl B
@@ -596,9 +646,9 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 - WFURL 引用 resolved_url
 - Authorization 引用 resolved_key
 
-### 8.8 GV1/GV2/GV3 删除
+### 8.8 GV1/GV2/GV3 及 make_gv 函数删除
 
-不再需要，被 S1-S5 和平台调度替代。
+不再需要，被 S1-S5、平台调度和模型调度替代。
 
 ---
 
@@ -620,9 +670,9 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 • 密钥(DeepSeek)：DeepSeek 平台的 API Key
 • 密钥(其他)：自定义平台的 API Key
 • 地址(其他)：自定义平台的 API 端点 URL
-• 自定义模型：当「模型」设为「其他」时填写
+• 自定义模型：当「模型」设为 5 时，在此填写模型名
 
-⚠️ 请勿修改「开发者」「版本号」等信息。
+⚠️ 请勿修改「开发者」「版本号」及预填地址。
 ```
 
 ### 9.2 配置字典 (ActionIndex=cfg_idx)
@@ -632,7 +682,12 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 
 ```
 🖥️ 平台：API 平台（填写: 火山引擎 / DeepSeek / 其他），默认火山引擎。
-🤖 模型：填写模型名。推荐: doubao-seed-2-0-mini-260215（默认）/ deepseek-chat / doubao-seed-1-6-flash-250828 / deepseek-v3-2-251201 / 其他。
+🤖 模型：选择编号
+  1 = doubao-seed-2-0-mini-260215（默认）
+  2 = deepseek-chat
+  3 = doubao-seed-1-6-flash-250828
+  4 = deepseek-v3-2-251201
+  5 = 其他（需在密钥字典中填写「自定义模型」）
 📏 max_tokens：最大输出 token 数，默认 300。
 ⚡ reasoning_effort：推理深度（填写: minimal / low / medium / high），默认 minimal。
 🔧 调试模式：开启后在 API 调用前后弹出通知，用于排查问题。
@@ -645,7 +700,7 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 | Key | 用途 |
 |-----|------|
 | `cfg_platform` | S1: 读取 平台 |
-| `cfg_model` | S2: 读取 模型（替代旧 cfg_model） |
+| `cfg_model` | S2: 读取 模型编号（替代旧 cfg_model） |
 | `cfg_maxtokens` | S3: 读取 max_tokens（替代旧 cfg_maxtokens） |
 | `cfg_reasoning` | S4: 读取 reasoning_effort |
 | `cfg_debug` | S5: 读取 调试模式 |
@@ -653,6 +708,8 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 | `resolved_url` | R_URL: 动态查找 URL |
 | `key_label` | T_KEY: gettext "密钥(￼)" |
 | `resolved_key` | R_KEY: 动态查找 API Key |
+| `model_map` | MODEL_MAP: 内置编号→模型名映射字典 |
+| `model_lookup` | MODEL_LOOKUP: 从 MODEL_MAP 查找模型名 |
 | `model_cond_group` | 模型 conditional GroupingIdentifier |
 | `model_cond_begin` | 模型 conditional BEGIN |
 | `model_cond_end` | 模型 conditional END |
@@ -674,23 +731,25 @@ NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
 - [ ] `modify_3full.py` 运行无报错
 - [ ] `3-full-deepseek.xml` 中新增的 conditional 结构正确（GroupingIdentifier 配对）
 - [ ] TEMPLATE 有 11 个 ￼ 占位符，attachments 有 11 项
+- [ ] MODEL_MAP 字典包含 4 条映射
 
-### 11.2 iPhone 验证 — 默认配置（火山引擎）
+### 11.2 iPhone 验证 — 默认配置（火山引擎 + 模型 1）
 - [ ] build → sign → 导入 iPhone 成功
-- [ ] 配置页显示所有新字段（密钥 3 槽、地址 3 个、平台/模型/max_tokens/reasoning_effort/调试模式）
-- [ ] 填入火山引擎 API Key，记账功能正常
+- [ ] 配置页显示所有新字段
+- [ ] 填入火山引擎 API Key，模型保持 1（默认），记账功能正常
 - [ ] 默认调试模式关闭：API 调用前后**不弹**通知
 
 ### 11.3 iPhone 验证 — 切换平台
-- [ ] 配置中将「平台」改为 `DeepSeek`，填入 DeepSeek API Key → 记账正常
-- [ ] 配置中将「平台」改为 `其他`，填入智谱 URL + Key + 模型名 → 记账正常
-- [ ] **关键**: 动态字典查找（地址/密钥）能正确按平台名取值
+- [ ] 平台改为 `DeepSeek`，模型改为 `2`，填入 DeepSeek API Key → 记账正常
+- [ ] 平台改为 `其他`，填入智谱 URL + Key，模型改为 `5`，自定义模型填 `glm-4.5-airx` → 记账正常
+- [ ] **关键**: 动态字典查找能正确按平台名取值
 
 ### 11.4 iPhone 验证 — 调试模式
 - [ ] 开启调试模式 → API 调用前弹"⏳ 正在调用 {平台} API..."，调用后弹"✅ {响应内容}"
 
-### 11.5 iPhone 验证 — 模型 "其他"
-- [ ] 模型设为 `其他`，自定义模型填 `glm-4.5-airx`，平台设为 `其他`，URL 填智谱地址 → 记账正常
+### 11.5 iPhone 验证 — 模型编号映射
+- [ ] 模型 1-4 各编号能正确映射为对应模型名（通过调试模式查看请求内容确认）
+- [ ] 模型 5 能正确读取自定义模型名
 
 ---
 

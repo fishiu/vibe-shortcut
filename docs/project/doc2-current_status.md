@@ -135,7 +135,8 @@
 | **3C-3** 精修：界面风格 + 时间精度 | 默认界面风格 3→1；CurrentDate 加时分 | ✅ 完成 |
 | **3C-4** 随机文字开关 | 配置 `显示随机文字` Boolean，conditional 包裹跳过 icost.vip API | ✅ 完成 |
 | **3C-5** 隐藏收银员 + API 计时通知 | 显示记录详情→false；DeepSeek 前后各弹通知 | ✅ 完成 |
-| **3C-6** API 配置外置 | URL/模型/max_tokens 做成可配置项，放密钥字典 | 🔜 待开发 |
+| **3C-6** API 配置外置 | URL/模型/max_tokens 做成可配置项，放密钥字典 | ⏭️ 被 3C-7 替代 |
+| **3C-7** 多平台配置 | 平台/模型/reasoning_effort 选择 + 调试开关 + 多密钥槽 | ✅ 完成 |
 
 ---
 
@@ -474,6 +475,97 @@ new_actions = [GV1, GV2, GV3, A1, A2, A3, N1, B, N2, C1, C2, C3, D]
 - [ ] 验证：① 默认配置（DeepSeek）记账正常 ② 改为智谱 glm-4.5-airx 后记账正常
 
 **Done 定义**: 不重新构建 shortcut，仅在 Shortcuts 配置界面改 4 个字段（密钥、API地址、模型、max_tokens），即可切换 API provider。
+
+---
+
+### 3C-7 — 多平台配置、调试开关与推理深度
+
+**背景**: 3C-6 的简单外置方案不够用。用户需要：一键切换 API 平台（火山引擎/DeepSeek/其他），每个平台独立密钥槽；模型用编号选择避免手打长字符串；调试通知可关闭；reasoning_effort 可配置。
+
+**设计文档**: [`architect/task-3c7-multi-platform-config.md`](architect/task-3c7-multi-platform-config.md)
+
+**本任务替代 3C-6**，直接在现有 `modify_3full.py` 上改造。
+
+#### Engineer 任务清单
+
+**Step 1: NEW_UUIDS 更新**
+
+删除 `cfg_url`，新增 21 个 key（完整列表见设计文档 §8.1）：
+```python
+NEW_UUIDS = {k: str(uuid.uuid4()).upper() for k in [
+    'ocr', 'body', 'clean', 'choices', 'first', 'content',
+    'show_random_getval', 'show_random_begin', 'show_random_else',
+    'show_random_end', 'show_random_group',
+    'notif_before', 'notif_after',
+    # 新增
+    'cfg_platform', 'cfg_model', 'cfg_maxtokens', 'cfg_reasoning', 'cfg_debug',
+    'url_label', 'resolved_url', 'key_label', 'resolved_key',
+    'model_map', 'model_lookup',
+    'model_cond_group', 'model_cond_begin', 'model_cond_end', 'model_custom',
+    'debug1_group', 'debug1_begin', 'debug1_end',
+    'debug2_group', 'debug2_begin', 'debug2_end',
+]}
+```
+
+**Step 2: Fix 3（密钥字典 29C441EE）重写**
+
+- [ ] 找到 `密钥` 条目 → key 名改为 `密钥(火山引擎)`
+- [ ] 追加 6 个新条目：`密钥(DeepSeek)`、`密钥(其他)`、`地址(火山引擎)`（预填 URL）、`地址(DeepSeek)`（预填 URL）、`地址(其他)`（空）、`自定义模型`（空）。具体值见设计文档 §3.2
+- [ ] **删掉**原 Fix 3 中追加 `API地址`/`模型`/`max_tokens` 的代码（被本方案替代）
+- [ ] ImportQuestions 同步：DefaultValue 中同步重命名 + 追加；Text 更新为设计文档 §9.1 的内容
+
+**Step 3: Fix 1（配置字典 588A56AF）补充**
+
+- [ ] cfg_items 末尾追加 5 个条目：`平台`(Text,"火山引擎")、`模型`(Number,"1")、`max_tokens`(Number,"300")、`reasoning_effort`(Text,"minimal")、`调试模式`(Boolean,false)。结构见设计文档 §4
+- [ ] ImportQuestions 同步：DefaultValue 追加同样 5 项；Text 追加设计文档 §9.2 的描述（含模型编号映射表）
+- [ ] 注释 action 文本追加 5 项说明
+
+**Step 4: TEMPLATE 更新 (10→11 占位符)**
+
+- [ ] 末尾 `',"temperature":0,"thinking":{"type":"disabled"}}'` 改为 `',"temperature":0,"reasoning_effort":"' + PH + '","thinking":{"type":"disabled"}}'`
+- [ ] pos 断言改为 `assert len(pos) == 11`
+- [ ] labels 列表末尾加 `'reasoning_effort'`
+
+**Step 5: 构建 30 个新 action（替换现有 13 个）**
+
+按设计文档 §5 构建完整 action 链，关键点：
+
+- **Phase 0** (S1-S5): 5 个 `make_cfg_read` 从 588A56AF 读配置。可复用 `make_gv` 模式但改为引用 `UUID_CONFIG_DICT`
+- **Phase 1** (T_URL, R_URL, T_KEY, R_KEY): 动态字典查找。gettext 拼 `"地址(￼)"` / `"密钥(￼)"`，然后 getvalueforkey 用 **WFTextTokenString** 的 WFDictionaryKey。完整结构见设计文档 §5 Phase 1
+- **Phase 2** (MODEL_MAP → MODEL_LOOKUP → SV_MODEL_DEFAULT → MC_BEGIN → MC_CUSTOM → SV_MODEL_OVERRIDE → MC_END):
+  - MODEL_MAP: `is.workflow.actions.dictionary`，4 条 Text 类型映射（"1"→"doubao-seed-2-0-mini-260215" 等）
+  - MODEL_LOOKUP: getvalueforkey 用 S2 输出做动态 key 从 MODEL_MAP 查找
+  - SV_MODEL_DEFAULT: `setvariable "model"` = MODEL_LOOKUP 输出
+  - MC_BEGIN: conditional `S2 text== "5"`（文本比较，WFCondition=0, WFConditionalActionString="5", CoercionItemClass=WFStringContentItem）
+  - MC_CUSTOM: getvalueforkey "自定义模型" from 29C441EE
+  - SV_MODEL_OVERRIDE: `setvariable "model"` = MC_CUSTOM 输出
+  - MC_END: conditional END（无 ELSE）
+- **Phase 3** (A1, A2, A3): A1/A3 不变。A2 的 attachment 映射改为 11 项：￼1 改为 `{Type: "Variable", VariableName: "model"}`，新增 ￼11 → S4 (reasoning_effort)
+- **Phase 4/6** (DB1_BEGIN, N1, DB1_END / DB2_BEGIN, N2, DB2_END): conditional 包裹通知。条件：S5 coerce Number ≥ 1（同 `显示随机文字` 模式）。N1 通知文本嵌入 S1 平台名
+- **Phase 5** (B): downloadurl 的 WFURL 引用 `resolved_url`，Authorization 的 `{7,1}` 引用 `resolved_key`（不再引用 `UUID_API_KEY`）
+- **Phase 7** (C1-C3, D): 不变
+
+- [ ] 删除 `make_gv` 函数和 GV1/GV2/GV3
+- [ ] `new_actions = [S1..S5, T_URL, R_URL, T_KEY, R_KEY, MODEL_MAP, MODEL_LOOKUP, SV_MODEL_DEFAULT, MC_BEGIN, MC_CUSTOM, SV_MODEL_OVERRIDE, MC_END, A1, A2, A3, DB1_BEGIN, N1, DB1_END, B, DB2_BEGIN, N2, DB2_END, C1, C2, C3, D]`
+- [ ] 替换行 `actions[dl_idx:dd_idx + 1] = new_actions`
+
+**Step 6: 验证断言更新**
+
+- [ ] `gettext_action` 的索引计算更新（A2 现在是 new_actions 中第 17 个，即 `dl_idx + 16`）— 需根据实际 action 列表重新算
+- [ ] 占位符断言改为 `assert n_ph == 11` / `assert n_att == 11`
+
+**Step 7: 运行 + build + sign + iPhone 验证**
+
+- [ ] `python tools/modify_3full.py` 无报错
+- [ ] `python tools/shortcut_tool.py build samples/money/3-full-deepseek.xml samples/money/3-full-deepseek.shortcut`
+- [ ] `python tools/shortcut_tool.py sign samples/money/3-full-deepseek.shortcut samples/money/3-full-deepseek-signed.shortcut`
+- [ ] 导入 iPhone，填入火山引擎 API Key，模型保持 1，记账正常
+- [ ] 调试模式关闭时不弹通知
+- [ ] 切换平台到 DeepSeek（模型改 2），记账正常
+- [ ] 切换到"其他"（模型改 5，自定义模型填 glm-4.5-airx，地址填智谱 URL），记账正常
+- [ ] 开启调试模式，确认通知显示平台名和响应内容
+
+**Done 定义**: 在 Shortcuts 配置界面中，选择平台/填模型编号/调整 reasoning_effort 即可切换 API provider，无需重新构建 shortcut。调试模式可独立开关。
 
 ---
 
