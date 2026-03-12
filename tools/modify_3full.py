@@ -175,10 +175,7 @@ def main():
             old_val = item['WFValue']['Value']
             item['WFValue']['Value'] = False
             print(f"  Fix 1b: 识别优惠 {old_val} → False")
-        if key_str == '显示记录详情':
-            old_val = item['WFValue']['Value']
-            item['WFValue']['Value'] = False
-            print(f"  Fix 1d: 显示记录详情 {old_val} → False")
+        # 3C-8b: 显示记录详情 保持原值 true，gettext 中精简内容（只显示入账账本）
 
     # Fix 1c: Sync WFWorkflowImportQuestions DefaultValue for config dict (ActionIndex=2)
     for iq in data.get('WFWorkflowImportQuestions', []):
@@ -192,9 +189,7 @@ def main():
                 if k == '识别优惠':
                     dv_item['WFValue']['Value'] = False
                     print(f"  Fix 1c: ImportQuestions 识别优惠 → False")
-                if k == '显示记录详情':
-                    dv_item['WFValue']['Value'] = False
-                    print(f"  Fix 1c: ImportQuestions 显示记录详情 → False")
+                # 3C-8b: 显示记录详情 保持原值 true
             # Add 显示随机文字 entry
             dv_items.append({
                 'WFItemType': 4,
@@ -232,8 +227,8 @@ def main():
     # Fix 1e: Add 5 multi-platform config entries to 588A56AF
     new_cfg_entries = [
         ('平台',             0, {'string': '火山引擎'}),
-        ('模型',             3, {'string': '1'}),
-        ('max_tokens',       3, {'string': '300'}),
+        ('模型',             3, {'string': '5'}),
+        ('max_tokens',       3, {'string': '1000'}),
         ('reasoning_effort', 0, {'string': 'minimal'}),
         ('调试模式',         4, None),  # Boolean, value=False
     ]
@@ -276,8 +271,9 @@ def main():
                 '\n  2 = deepseek-chat'
                 '\n  3 = doubao-seed-1-6-flash-250828'
                 '\n  4 = deepseek-v3-2-251201'
-                '\n  5 = 其他（需在密钥字典中填写「自定义模型」）'
-                '\n📏 max_tokens：最大输出 token 数，默认 300。'
+                '\n  5 = doubao-seed-1-6-flash-250615'
+                '\n  6 = 其他（需在密钥字典中填写「自定义模型」）'
+                '\n📏 max_tokens：最大输出 token 数，默认 1000。'
                 '\n⚡ reasoning_effort：推理深度（填写: minimal / low / medium / high），默认 minimal。'
                 '\n🔧 调试模式：开启后在 API 调用前后弹出通知，用于排查问题。'
             )
@@ -297,7 +293,7 @@ def main():
                 '• 密钥(DeepSeek)：DeepSeek 平台的 API Key\n'
                 '• 密钥(其他)：自定义平台的 API Key\n'
                 '• 地址(其他)：自定义平台的 API 端点 URL\n'
-                '• 自定义模型：当「模型」设为 5 时填写模型名\n\n'
+                '• 自定义模型：当「模型」设为 6 时填写模型名\n\n'
                 '⚠️ 请勿修改「开发者」「版本号」及预填地址。\n\n'
                 '═══ 📋 配置项说明（下方词典）═══\n\n'
             )
@@ -310,10 +306,17 @@ def main():
                 '\n  2 = deepseek-chat'
                 '\n  3 = doubao-seed-1-6-flash-250828'
                 '\n  4 = deepseek-v3-2-251201'
-                '\n  5 = 其他（需在上方密钥字典中填写「自定义模型」）'
-                '\n📏 max_tokens：最大输出 token 数，默认 300'
+                '\n  5 = doubao-seed-1-6-flash-250615'
+                '\n  6 = 其他（需在上方密钥字典中填写「自定义模型」）'
+                '\n📏 max_tokens：最大输出 token 数，默认 1000'
                 '\n⚡ reasoning_effort：推理深度，填写 minimal / low / medium / high'
                 '\n🔧 调试模式：开启后 API 调用前后弹通知，用于排查问题'
+                '\n🗃️ 显示记录详情：是否显示入账账本信息'
+            )
+            # 3C-8b: Update 显示记录详情 description in original comment
+            comment = comment.replace(
+                '🗃️ 显示记录详情：是否显示操作员名称、记录次数等',
+                '🗃️ 显示记录详情：是否显示入账账本信息'
             )
             params['WFCommentActionText'] = key_dict_guide + comment + config_guide
             print(f"  Fix 2b: Updated comment action text")
@@ -454,10 +457,63 @@ def main():
                 '• 密钥(DeepSeek)：DeepSeek 平台的 API Key\n'
                 '• 密钥(其他)：自定义平台的 API Key\n'
                 '• 地址(其他)：自定义平台的 API 端点 URL\n'
-                '• 自定义模型：当「模型」设为 5 时，在此填写模型名\n\n'
+                '• 自定义模型：当「模型」设为 6 时，在此填写模型名\n\n'
                 '⚠️ 请勿修改「开发者」「版本号」及预填地址。'
             )
             print(f"  Fix 3c: ImportQuestions synced for key dict")
+            break
+
+    # === 3C-8a: Set DefaultValue for 自定义规则 ImportQuestions ===
+    CUSTOM_RULES_DEFAULT = (
+        '备注(remark)字段规则：简洁且表意完整，让人一眼能看明白这笔消费。'
+        '网购写明平台、商家、商品（如 淘宝 xx旗舰店 数据线），信息不全只写已知部分；'
+        '线下写明商户和内容（如 瑞幸 生椰拿铁）。不要捏造OCR中没有的信息。'
+    )
+    custom_rules_idx = find_action_idx(actions, UUID_CUSTOM_RULES)
+    for iq in data.get('WFWorkflowImportQuestions', []):
+        if iq.get('ActionIndex') == custom_rules_idx and iq.get('ParameterKey') == 'WFTextActionText':
+            iq['DefaultValue'] = CUSTOM_RULES_DEFAULT
+            iq['Text'] = (
+                '🗣️ 自定义规则\n\n'
+                '如果有个性化需求，可在下方文本框输入自定义识别规则。\n'
+                '默认已填入备注写法规则，可根据需要修改或清空。\n'
+                '示例：识别到 xxx 则分类归为"xxx"，或标签为"xxx"'
+            )
+            print(f"  3C-8a: Updated 自定义规则 DefaultValue and Text (ActionIndex={custom_rules_idx})")
+            break
+
+    # 3C-8a: Also set the gettext action's own WFTextActionText to the default rules
+    actions[custom_rules_idx]['WFWorkflowActionParameters']['WFTextActionText'] = CUSTOM_RULES_DEFAULT
+    print(f"  3C-8a: Set gettext {UUID_CUSTOM_RULES} WFTextActionText to default rules")
+
+    # 3C-8a: Update 自定义规则 comment action text
+    for action in actions:
+        params = action.get('WFWorkflowActionParameters', {})
+        comment = params.get('WFCommentActionText', '')
+        if isinstance(comment, str) and '🗣️ 自定义规则' in comment and '个性化' in comment:
+            params['WFCommentActionText'] = (
+                '🗣️ 自定义规则\n\n'
+                '如果有个性化需求，可在下方文本框输入自定义识别规则。\n'
+                '默认已填入备注写法规则，可根据需要修改或清空。\n'
+                '示例：识别到 xxx 则分类归为"xxx"，或标签为"xxx"'
+            )
+            print(f"  3C-8a: Updated 自定义规则 comment action text")
+            break
+
+    # === 3C-8b: Modify gettext 5499E009 to show only 入账账本 ===
+    UUID_DETAIL_GETTEXT = '5499E009-3080-4D7C-BB04-55BA02F6AC53'
+    for action in actions:
+        params = action.get('WFWorkflowActionParameters', {})
+        if params.get('UUID') == UUID_DETAIL_GETTEXT:
+            text_val = params['WFTextActionText']['Value']
+            text_val['string'] = f'入账账本： {PH} '
+            text_val['attachmentsByRange'] = {
+                '{6, 1}': {
+                    'Type': 'Variable',
+                    'VariableName': 'ledger'
+                }
+            }
+            print(f"  3C-8b: Modified gettext {UUID_DETAIL_GETTEXT} → '入账账本： ￼ '")
             break
 
     # Find key action indices
@@ -894,6 +950,11 @@ def main():
                             'WFKey': {'Value': {'string': '4'}, 'WFSerializationType': 'WFTextTokenString'},
                             'WFValue': {'Value': {'string': 'deepseek-v3-2-251201'}, 'WFSerializationType': 'WFTextTokenString'}
                         },
+                        {
+                            'WFItemType': 0,
+                            'WFKey': {'Value': {'string': '5'}, 'WFSerializationType': 'WFTextTokenString'},
+                            'WFValue': {'Value': {'string': 'doubao-seed-1-6-flash-250615'}, 'WFSerializationType': 'WFTextTokenString'}
+                        },
                     ]
                 },
                 'WFSerializationType': 'WFDictionaryFieldValue'
@@ -946,15 +1007,15 @@ def main():
         }
     }
 
-    # MC_BEGIN: conditional (S2 as Number ≥ 5) — custom model branch
-    # Use WFCondition=4 (≥) which is verified for number mode. Model 1-4 skip, 5+ enters.
+    # MC_BEGIN: conditional (S2 as Number ≥ 6) — custom model branch
+    # Use WFCondition=4 (≥) which is verified for number mode. Model 1-5 skip, 6+ enters.
     MC_BEGIN = {
         'WFWorkflowActionIdentifier': 'is.workflow.actions.conditional',
         'WFWorkflowActionParameters': {
             'GroupingIdentifier': NEW_UUIDS['model_cond_group'],
             'UUID': NEW_UUIDS['model_cond_begin'],
             'WFCondition': 4,                         # ≥ (number mode, verified)
-            'WFNumberValue': '5',
+            'WFNumberValue': '6',
             'WFControlFlowMode': 0,                   # BEGIN
             'WFInput': {
                 'Type': 'Variable',

@@ -137,6 +137,45 @@
 | **3C-5** 隐藏收银员 + API 计时通知 | 显示记录详情→false；DeepSeek 前后各弹通知 | ✅ 完成 |
 | **3C-6** API 配置外置 | URL/模型/max_tokens 做成可配置项，放密钥字典 | ⏭️ 被 3C-7 替代 |
 | **3C-7** 多平台配置 | 平台/模型/reasoning_effort 选择 + 调试开关 + 多密钥槽 | ✅ 完成 |
+| **3C-8** 最终优化三合一 | 补充prompt默认值 + 恢复账本显示 + 新增模型选项 | 🔜 待实施 |
+
+---
+
+### 3C-8 — 最终优化三合一
+
+**背景**: Phase 3 收尾前的三个小优化，均在 `modify_3full.py` 上改动。
+
+**设计文档**: [`architect/task-3c8-final-optimizations.md`](architect/task-3c8-final-optimizations.md)
+
+| 子任务 | 内容 | 要点 |
+|--------|------|------|
+| 3C-8a | 补充prompt默认值 | 「自定义规则」ImportQuestions DefaultValue 从空改为备注规则 |
+| 3C-8b | 恢复账本显示 | 撤销 Fix 1d（显示记录详情→false），改 gettext 只显示入账账本 |
+| 3C-8c | 新增模型 | MODEL_MAP 加 `5=doubao-seed-1-6-flash-250615`，自定义改为 6 |
+
+#### Engineer 任务清单
+
+**3C-8a: 补充prompt**
+- [ ] 找到 ImportQuestions 中 `ParameterKey='WFTextActionText'` 且 Text 含「自定义规则」的条目
+- [ ] 将 `DefaultValue` 从 `''` 改为备注规则文本（见设计文档 §2.2）
+- [ ] 更新该条目的 `Text` 描述
+- [ ] 更新含「自定义规则」的 comment action 文本
+
+**3C-8b: 恢复账本**
+- [ ] 删除 Fix 1d 代码（`显示记录详情` → false）及其 ImportQuestions 同步
+- [ ] 找到 gettext UUID `5499E009-3080-4D7C-BB04-55BA02F6AC53`，修改文本为 `入账账本： ￼ `，attachments 只保留 `{6,1}→ledger`
+- [ ] 更新 comment action 中 `显示记录详情` 说明文本
+
+**3C-8c: 新增模型**
+- [ ] MODEL_MAP 追加 `'5' → 'doubao-seed-1-6-flash-250615'`
+- [ ] MC_BEGIN 的 `WFNumberValue` 从 `'5'` 改为 `'6'`
+- [ ] 更新 comment action 和 ImportQuestions 中的模型编号列表（5 条→6 条，自定义从 5 改为 6）
+
+**验证**
+- [ ] 运行 `modify_3full.py` → build → sign → iPhone 验证
+- [ ] 导入时「自定义规则」已预填备注规则
+- [ ] 记账结果页显示入账账本、不显示交易员
+- [ ] 模型 5 使用新模型，模型 6 使用自定义模型
 
 ---
 

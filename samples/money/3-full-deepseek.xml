@@ -305,7 +305,7 @@
 • 密钥(DeepSeek)：DeepSeek 平台的 API Key
 • 密钥(其他)：自定义平台的 API Key
 • 地址(其他)：自定义平台的 API 端点 URL
-• 自定义模型：当「模型」设为 5 时填写模型名
+• 自定义模型：当「模型」设为 6 时填写模型名
 
 ⚠️ 请勿修改「开发者」「版本号」及预填地址。
 
@@ -313,7 +313,7 @@
 
 🧾 界面风格：1. 小票风格：以仿真小票的形式呈现账单预览。2. 菜单风格：传统行列式菜单界面。3. 简易风格：⚠️简易风格下，批量识别无法跳过单笔记录
 ⚙️ 显示交易属性：小票抬头是否显示“计入收支|计入预算|报销”。
-🗃️ 显示记录详情：是否显示操作员名称、记录次数等
+🗃️ 显示记录详情：是否显示入账账本信息
 💸 识别优惠：是否识别优惠金额
 🕹️ 位置：是否记录记账位置，iCost会员才能使用（打开会影响拖慢记录的速度）
 📸 延迟截图：如果出现金额识别为空，或者识别出错的情况，可打开此开关解决问题。
@@ -326,10 +326,12 @@
   2 = deepseek-chat
   3 = doubao-seed-1-6-flash-250828
   4 = deepseek-v3-2-251201
-  5 = 其他（需在上方密钥字典中填写「自定义模型」）
-📏 max_tokens：最大输出 token 数，默认 300
+  5 = doubao-seed-1-6-flash-250615
+  6 = 其他（需在上方密钥字典中填写「自定义模型」）
+📏 max_tokens：最大输出 token 数，默认 1000
 ⚡ reasoning_effort：推理深度，填写 minimal / low / medium / high
-🔧 调试模式：开启后 API 调用前后弹通知，用于排查问题</string>
+🔧 调试模式：开启后 API 调用前后弹通知，用于排查问题
+🗃️ 显示记录详情：是否显示入账账本信息</string>
 			</dict>
 		</dict>
 		<dict>
@@ -406,7 +408,7 @@
 								<key>WFValue</key>
 								<dict>
 									<key>Value</key>
-									<false/>
+									<true/>
 									<key>WFSerializationType</key>
 									<string>WFNumberSubstitutableState</string>
 								</dict>
@@ -537,7 +539,7 @@
 									<key>Value</key>
 									<dict>
 										<key>string</key>
-										<string>1</string>
+										<string>5</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>
@@ -561,7 +563,7 @@
 									<key>Value</key>
 									<dict>
 										<key>string</key>
-										<string>300</string>
+										<string>1000</string>
 									</dict>
 									<key>WFSerializationType</key>
 									<string>WFTextTokenString</string>
@@ -705,9 +707,9 @@
 				<key>WFCommentActionText</key>
 				<string>🗣️ 自定义规则
 
-如果有个性化的需求，可以在下面的文本框输入期望的自定义识别具体规则。
-
-比如如识别到 xxx，则分类归为“xxx”，或者标签为“xxx”，或者备注内容要写成“xxx”</string>
+如果有个性化需求，可在下方文本框输入自定义识别规则。
+默认已填入备注写法规则，可根据需要修改或清空。
+示例：识别到 xxx 则分类归为"xxx"，或标签为"xxx"</string>
 			</dict>
 		</dict>
 		<dict>
@@ -718,7 +720,7 @@
 				<key>UUID</key>
 				<string>4856151E-17D0-45C6-B4F0-DC03CE6B5E6D</string>
 				<key>WFTextActionText</key>
-				<string></string>
+				<string>备注(remark)字段规则：简洁且表意完整，让人一眼能看明白这笔消费。网购写明平台、商家、商品（如 淘宝 xx旗舰店 数据线），信息不全只写已知部分；线下写明商户和内容（如 瑞幸 生椰拿铁）。不要捏造OCR中没有的信息。</string>
 			</dict>
 		</dict>
 		<dict>
@@ -2211,7 +2213,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>3086387A-2B1F-44CB-801F-72E306CF1F00</string>
+				<string>6515C890-824C-4C87-86DD-C1884FBECEB4</string>
 				<key>WFDictionaryKey</key>
 				<string>显示随机文字</string>
 				<key>WFInput</key>
@@ -2236,9 +2238,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>D731ADF8-3C37-46B1-8D8B-862181FBF3F9</string>
+				<string>E0C26DEB-7EA3-4358-8B9F-9FAC08703C6D</string>
 				<key>UUID</key>
-				<string>6361A86A-9821-4818-81EA-1CF30E7110E5</string>
+				<string>3C409F2A-5818-4E7C-9CF0-96FBDE6B1250</string>
 				<key>WFCondition</key>
 				<integer>4</integer>
 				<key>WFControlFlowMode</key>
@@ -2263,7 +2265,7 @@
 							<key>OutputName</key>
 							<string>词典值</string>
 							<key>OutputUUID</key>
-							<string>3086387A-2B1F-44CB-801F-72E306CF1F00</string>
+							<string>6515C890-824C-4C87-86DD-C1884FBECEB4</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -2523,9 +2525,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>D731ADF8-3C37-46B1-8D8B-862181FBF3F9</string>
+				<string>E0C26DEB-7EA3-4358-8B9F-9FAC08703C6D</string>
 				<key>UUID</key>
-				<string>75EB0D44-AB1E-49FE-897F-3FD7859A8F3B</string>
+				<string>F1969EF3-BDDC-472B-9883-18D500CD108C</string>
 				<key>WFControlFlowMode</key>
 				<integer>1</integer>
 			</dict>
@@ -2536,9 +2538,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>D731ADF8-3C37-46B1-8D8B-862181FBF3F9</string>
+				<string>E0C26DEB-7EA3-4358-8B9F-9FAC08703C6D</string>
 				<key>UUID</key>
-				<string>4655BF9D-5F50-4022-BFEE-251AB499836D</string>
+				<string>7D6966EC-3010-4589-9B30-4BA9BA16FD18</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -2574,7 +2576,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>98AB1793-185E-4BE3-A8B8-28435CCD5F18</string>
+				<string>F2812DA1-DCDF-4545-AA8A-01ADC502F16C</string>
 				<key>WFDictionaryKey</key>
 				<string>平台</string>
 				<key>WFInput</key>
@@ -2599,7 +2601,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>A7C4C156-4FEA-4335-ADFF-D7C2F1E6B07E</string>
+				<string>64D79358-CBCD-486B-9C20-8B77BAED9032</string>
 				<key>WFDictionaryKey</key>
 				<string>模型</string>
 				<key>WFInput</key>
@@ -2624,7 +2626,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>D7CF267C-FA83-4B01-B0D4-29C592CDA56E</string>
+				<string>872A9469-4B1B-400C-9648-944B667186DD</string>
 				<key>WFDictionaryKey</key>
 				<string>max_tokens</string>
 				<key>WFInput</key>
@@ -2649,7 +2651,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>EFF700E6-56D7-4AC8-919D-A7BB97B5EE27</string>
+				<string>E7E1D1EA-456D-4493-88D9-D8663CB8F21D</string>
 				<key>WFDictionaryKey</key>
 				<string>reasoning_effort</string>
 				<key>WFInput</key>
@@ -2674,7 +2676,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>869641FC-EA79-48C2-8AB7-242D5C1CFA7D</string>
+				<string>562DF49A-0520-4D70-9503-76D12F239326</string>
 				<key>WFDictionaryKey</key>
 				<string>调试模式</string>
 				<key>WFInput</key>
@@ -2699,7 +2701,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>691720A1-8DE9-4AE2-A851-0EFE16DCCB1D</string>
+				<string>CC29E36D-65CA-43B5-B6A0-E7DD5D67A03C</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
@@ -2711,7 +2713,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>98AB1793-185E-4BE3-A8B8-28435CCD5F18</string>
+								<string>F2812DA1-DCDF-4545-AA8A-01ADC502F16C</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -2730,7 +2732,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>2843C872-FA00-4B24-9A9C-4C9F05F0E24E</string>
+				<string>50DE01A3-6D12-4984-8211-0BEA48708523</string>
 				<key>WFDictionaryKey</key>
 				<dict>
 					<key>Value</key>
@@ -2742,7 +2744,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>691720A1-8DE9-4AE2-A851-0EFE16DCCB1D</string>
+								<string>CC29E36D-65CA-43B5-B6A0-E7DD5D67A03C</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -2775,7 +2777,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>B914A59D-9837-4017-A7A9-D86D514F1638</string>
+				<string>9AAD5F67-87A2-44B4-AFA2-E8D3F9AE48CC</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
@@ -2787,7 +2789,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>98AB1793-185E-4BE3-A8B8-28435CCD5F18</string>
+								<string>F2812DA1-DCDF-4545-AA8A-01ADC502F16C</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -2806,7 +2808,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>0393FA47-0C8A-4C68-825A-00952B53227A</string>
+				<string>1AC3401B-4DB5-44BE-B46A-6DC6A7407D45</string>
 				<key>WFDictionaryKey</key>
 				<dict>
 					<key>Value</key>
@@ -2818,7 +2820,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>B914A59D-9837-4017-A7A9-D86D514F1638</string>
+								<string>9AAD5F67-87A2-44B4-AFA2-E8D3F9AE48CC</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -2851,7 +2853,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>F9310CD9-DE9B-455B-BD80-994E9DBD0646</string>
+				<string>86647E27-FC3D-4901-A03C-8AD1E0361184</string>
 				<key>WFItems</key>
 				<dict>
 					<key>Value</key>
@@ -2954,6 +2956,30 @@
 									<string>WFTextTokenString</string>
 								</dict>
 							</dict>
+							<dict>
+								<key>WFItemType</key>
+								<integer>0</integer>
+								<key>WFKey</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>5</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+								<key>WFValue</key>
+								<dict>
+									<key>Value</key>
+									<dict>
+										<key>string</key>
+										<string>doubao-seed-1-6-flash-250615</string>
+									</dict>
+									<key>WFSerializationType</key>
+									<string>WFTextTokenString</string>
+								</dict>
+							</dict>
 						</array>
 					</dict>
 					<key>WFSerializationType</key>
@@ -2967,7 +2993,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>498CAAD3-BCA9-4D24-9471-0B6F0F86461C</string>
+				<string>2582F3DB-7E54-42E3-B4F6-109950AEE902</string>
 				<key>WFDictionaryKey</key>
 				<dict>
 					<key>Value</key>
@@ -2979,7 +3005,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>A7C4C156-4FEA-4335-ADFF-D7C2F1E6B07E</string>
+								<string>64D79358-CBCD-486B-9C20-8B77BAED9032</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -2997,7 +3023,7 @@
 						<key>OutputName</key>
 						<string>词典</string>
 						<key>OutputUUID</key>
-						<string>F9310CD9-DE9B-455B-BD80-994E9DBD0646</string>
+						<string>86647E27-FC3D-4901-A03C-8AD1E0361184</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3018,7 +3044,7 @@
 						<key>OutputName</key>
 						<string>词典值</string>
 						<key>OutputUUID</key>
-						<string>498CAAD3-BCA9-4D24-9471-0B6F0F86461C</string>
+						<string>2582F3DB-7E54-42E3-B4F6-109950AEE902</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3035,9 +3061,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>38B7C8D5-B9F2-4580-96C7-3280A722FF42</string>
+				<string>6BD333DA-3492-4782-A025-596E5A7EF24B</string>
 				<key>UUID</key>
-				<string>03128C83-23D0-4F10-8FA0-CB8D52A69519</string>
+				<string>5E3378CD-F646-474F-84FC-215A908DF463</string>
 				<key>WFCondition</key>
 				<integer>4</integer>
 				<key>WFControlFlowMode</key>
@@ -3062,7 +3088,7 @@
 							<key>OutputName</key>
 							<string>词典值</string>
 							<key>OutputUUID</key>
-							<string>A7C4C156-4FEA-4335-ADFF-D7C2F1E6B07E</string>
+							<string>64D79358-CBCD-486B-9C20-8B77BAED9032</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -3071,7 +3097,7 @@
 					</dict>
 				</dict>
 				<key>WFNumberValue</key>
-				<string>5</string>
+				<string>6</string>
 			</dict>
 		</dict>
 		<dict>
@@ -3080,7 +3106,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>D312BA82-8322-4F06-8F31-9293265CB97F</string>
+				<string>17FBDE01-7505-4229-ADD9-DCBD900BBC76</string>
 				<key>WFDictionaryKey</key>
 				<string>自定义模型</string>
 				<key>WFInput</key>
@@ -3111,7 +3137,7 @@
 						<key>OutputName</key>
 						<string>词典值</string>
 						<key>OutputUUID</key>
-						<string>D312BA82-8322-4F06-8F31-9293265CB97F</string>
+						<string>17FBDE01-7505-4229-ADD9-DCBD900BBC76</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -3128,9 +3154,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>38B7C8D5-B9F2-4580-96C7-3280A722FF42</string>
+				<string>6BD333DA-3492-4782-A025-596E5A7EF24B</string>
 				<key>UUID</key>
-				<string>C43C982F-1088-41A1-8C9C-0FDBA0F4845F</string>
+				<string>00C0039F-BE41-4C13-B4DA-9A81FE7D9EC4</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -3141,7 +3167,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>8FBA7B58-ECD8-40D1-9477-8A1137EF3C36</string>
+				<string>882473B1-2AA6-4BAC-8790-BE52C20E5BBB</string>
 				<key>WFImage</key>
 				<dict>
 					<key>Value</key>
@@ -3164,7 +3190,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>171CD6A5-6C5A-47A4-81DE-A0623A8A5467</string>
+				<string>6CF37734-7BEF-4967-AC55-410891C23327</string>
 				<key>WFTextActionText</key>
 				<dict>
 					<key>Value</key>
@@ -4090,7 +4116,7 @@
 								<key>OutputName</key>
 								<string>Text from Image</string>
 								<key>OutputUUID</key>
-								<string>8FBA7B58-ECD8-40D1-9477-8A1137EF3C36</string>
+								<string>882473B1-2AA6-4BAC-8790-BE52C20E5BBB</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4099,7 +4125,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>D7CF267C-FA83-4B01-B0D4-29C592CDA56E</string>
+								<string>872A9469-4B1B-400C-9648-944B667186DD</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4108,7 +4134,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>EFF700E6-56D7-4AC8-919D-A7BB97B5EE27</string>
+								<string>E7E1D1EA-456D-4493-88D9-D8663CB8F21D</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4127,7 +4153,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>190377FF-3979-49FB-BB51-DBDCE41F1AFF</string>
+				<string>D84CC33D-5FE8-40D0-84ED-542684AE0A4F</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -4139,7 +4165,7 @@
 								<key>OutputName</key>
 								<string>Text</string>
 								<key>OutputUUID</key>
-								<string>171CD6A5-6C5A-47A4-81DE-A0623A8A5467</string>
+								<string>6CF37734-7BEF-4967-AC55-410891C23327</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4163,9 +4189,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>E506FE3B-91EA-4709-B7A9-2469093B96FE</string>
+				<string>5872BB90-D1C1-4332-9E71-8A05083B1A92</string>
 				<key>UUID</key>
-				<string>98C460D4-841A-49A4-924F-6B28C8E0ACC7</string>
+				<string>05C65D6C-A2F8-4FF8-A770-A3C52DAE4971</string>
 				<key>WFCondition</key>
 				<integer>4</integer>
 				<key>WFControlFlowMode</key>
@@ -4190,7 +4216,7 @@
 							<key>OutputName</key>
 							<string>词典值</string>
 							<key>OutputUUID</key>
-							<string>869641FC-EA79-48C2-8AB7-242D5C1CFA7D</string>
+							<string>562DF49A-0520-4D70-9503-76D12F239326</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -4208,7 +4234,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>129929A7-9BD7-4881-9625-5050DA30BAEB</string>
+				<string>2BEE35BC-0E78-463F-925F-893147DCD65F</string>
 				<key>WFNotificationActionBody</key>
 				<dict>
 					<key>Value</key>
@@ -4220,7 +4246,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>98AB1793-185E-4BE3-A8B8-28435CCD5F18</string>
+								<string>F2812DA1-DCDF-4545-AA8A-01ADC502F16C</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4239,9 +4265,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>E506FE3B-91EA-4709-B7A9-2469093B96FE</string>
+				<string>5872BB90-D1C1-4332-9E71-8A05083B1A92</string>
 				<key>UUID</key>
-				<string>D97E6FF5-4463-466A-BA47-9560468B77A6</string>
+				<string>AAEF8E5B-E480-4E93-B284-BE6866BE00A5</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -4287,7 +4313,7 @@
 												<key>OutputName</key>
 												<string>词典值</string>
 												<key>OutputUUID</key>
-												<string>0393FA47-0C8A-4C68-825A-00952B53227A</string>
+												<string>1AC3401B-4DB5-44BE-B46A-6DC6A7407D45</string>
 												<key>Type</key>
 												<string>ActionOutput</string>
 											</dict>
@@ -4337,7 +4363,7 @@
 						<key>OutputName</key>
 						<string>Updated Text</string>
 						<key>OutputUUID</key>
-						<string>190377FF-3979-49FB-BB51-DBDCE41F1AFF</string>
+						<string>D84CC33D-5FE8-40D0-84ED-542684AE0A4F</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -4355,7 +4381,7 @@
 								<key>OutputName</key>
 								<string>词典值</string>
 								<key>OutputUUID</key>
-								<string>2843C872-FA00-4B24-9A9C-4C9F05F0E24E</string>
+								<string>50DE01A3-6D12-4984-8211-0BEA48708523</string>
 								<key>Type</key>
 								<string>ActionOutput</string>
 							</dict>
@@ -4374,9 +4400,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>D0CAEEB1-BCF8-4B65-BE18-707FFA4728C5</string>
+				<string>DFE1FCA0-6FC5-42E9-84E1-CB32D2E918FC</string>
 				<key>UUID</key>
-				<string>9B217B3A-3E12-4322-965A-7D2C8A85B132</string>
+				<string>58FB3A78-9BCF-4B5B-985C-7105D44DC46F</string>
 				<key>WFCondition</key>
 				<integer>4</integer>
 				<key>WFControlFlowMode</key>
@@ -4401,7 +4427,7 @@
 							<key>OutputName</key>
 							<string>词典值</string>
 							<key>OutputUUID</key>
-							<string>869641FC-EA79-48C2-8AB7-242D5C1CFA7D</string>
+							<string>562DF49A-0520-4D70-9503-76D12F239326</string>
 							<key>Type</key>
 							<string>ActionOutput</string>
 						</dict>
@@ -4419,7 +4445,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>1BB23583-FB52-4CEE-B440-866B09CE5A48</string>
+				<string>3269FFD6-C832-4608-B581-70EA4E7EFEB9</string>
 				<key>WFNotificationActionBody</key>
 				<dict>
 					<key>Value</key>
@@ -4450,9 +4476,9 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>GroupingIdentifier</key>
-				<string>D0CAEEB1-BCF8-4B65-BE18-707FFA4728C5</string>
+				<string>DFE1FCA0-6FC5-42E9-84E1-CB32D2E918FC</string>
 				<key>UUID</key>
-				<string>4EFE153E-B62D-4597-B3BF-ED4175BE3225</string>
+				<string>34A8D7CA-E290-47C6-8E9F-E921D8B225AA</string>
 				<key>WFControlFlowMode</key>
 				<integer>2</integer>
 			</dict>
@@ -4463,7 +4489,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>9F0EC4DE-A65A-498B-B233-B79DD572E914</string>
+				<string>8260C5B1-093E-40CF-9FB7-57699428C8CE</string>
 				<key>WFDictionaryKey</key>
 				<string>choices</string>
 				<key>WFInput</key>
@@ -4488,7 +4514,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>A86662E0-BEE7-46FA-A61E-39B88AE3C4A1</string>
+				<string>E07DE965-281D-414F-AF64-FC5266FCA8CA</string>
 				<key>WFInput</key>
 				<dict>
 					<key>Value</key>
@@ -4496,7 +4522,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>9F0EC4DE-A65A-498B-B233-B79DD572E914</string>
+						<string>8260C5B1-093E-40CF-9FB7-57699428C8CE</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -4513,7 +4539,7 @@
 			<key>WFWorkflowActionParameters</key>
 			<dict>
 				<key>UUID</key>
-				<string>6049DB4C-6D89-4102-A387-2163225342D2</string>
+				<string>8A4038C2-47A2-474C-8168-548087496E88</string>
 				<key>WFDictionaryKey</key>
 				<string>message.content</string>
 				<key>WFInput</key>
@@ -4523,7 +4549,7 @@
 						<key>OutputName</key>
 						<string>Item from List</string>
 						<key>OutputUUID</key>
-						<string>A86662E0-BEE7-46FA-A61E-39B88AE3C4A1</string>
+						<string>E07DE965-281D-414F-AF64-FC5266FCA8CA</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -4546,7 +4572,7 @@
 						<key>OutputName</key>
 						<string>Value for Key</string>
 						<key>OutputUUID</key>
-						<string>6049DB4C-6D89-4102-A387-2163225342D2</string>
+						<string>8A4038C2-47A2-474C-8168-548087496E88</string>
 						<key>Type</key>
 						<string>ActionOutput</string>
 					</dict>
@@ -12717,32 +12743,16 @@
 					<dict>
 						<key>attachmentsByRange</key>
 						<dict>
-							<key>{15, 1}</key>
-							<dict>
-								<key>Type</key>
-								<string>Variable</string>
-								<key>VariableName</key>
-								<string>cashier</string>
-							</dict>
-							<key>{23, 1}</key>
+							<key>{6, 1}</key>
 							<dict>
 								<key>Type</key>
 								<string>Variable</string>
 								<key>VariableName</key>
 								<string>ledger</string>
 							</dict>
-							<key>{6, 1}</key>
-							<dict>
-								<key>Type</key>
-								<string>Variable</string>
-								<key>VariableName</key>
-								<string>requests</string>
-							</dict>
 						</dict>
 						<key>string</key>
-						<string>记录次数： ￼次 
-交易员： ￼
-入账账本： ￼ </string>
+						<string>入账账本： ￼ </string>
 					</dict>
 					<key>WFSerializationType</key>
 					<string>WFTextTokenString</string>
@@ -40391,7 +40401,7 @@
 • 密钥(DeepSeek)：DeepSeek 平台的 API Key
 • 密钥(其他)：自定义平台的 API Key
 • 地址(其他)：自定义平台的 API 端点 URL
-• 自定义模型：当「模型」设为 5 时，在此填写模型名
+• 自定义模型：当「模型」设为 6 时，在此填写模型名
 
 ⚠️ 请勿修改「开发者」「版本号」及预填地址。</string>
 		</dict>
@@ -40467,7 +40477,7 @@
 							<key>WFValue</key>
 							<dict>
 								<key>Value</key>
-								<false/>
+								<true/>
 								<key>WFSerializationType</key>
 								<string>WFNumberSubstitutableState</string>
 							</dict>
@@ -40598,7 +40608,7 @@
 								<key>Value</key>
 								<dict>
 									<key>string</key>
-									<string>1</string>
+									<string>5</string>
 								</dict>
 								<key>WFSerializationType</key>
 								<string>WFTextTokenString</string>
@@ -40622,7 +40632,7 @@
 								<key>Value</key>
 								<dict>
 									<key>string</key>
-									<string>300</string>
+									<string>1000</string>
 								</dict>
 								<key>WFSerializationType</key>
 								<string>WFTextTokenString</string>
@@ -40694,8 +40704,9 @@
   2 = deepseek-chat
   3 = doubao-seed-1-6-flash-250828
   4 = deepseek-v3-2-251201
-  5 = 其他（需在密钥字典中填写「自定义模型」）
-📏 max_tokens：最大输出 token 数，默认 300。
+  5 = doubao-seed-1-6-flash-250615
+  6 = 其他（需在密钥字典中填写「自定义模型」）
+📏 max_tokens：最大输出 token 数，默认 1000。
 ⚡ reasoning_effort：推理深度（填写: minimal / low / medium / high），默认 minimal。
 🔧 调试模式：开启后在 API 调用前后弹出通知，用于排查问题。</string>
 		</dict>
@@ -40775,13 +40786,15 @@
 			<key>Category</key>
 			<string>Parameter</string>
 			<key>DefaultValue</key>
-			<string></string>
+			<string>备注(remark)字段规则：简洁且表意完整，让人一眼能看明白这笔消费。网购写明平台、商家、商品（如 淘宝 xx旗舰店 数据线），信息不全只写已知部分；线下写明商户和内容（如 瑞幸 生椰拿铁）。不要捏造OCR中没有的信息。</string>
 			<key>ParameterKey</key>
 			<string>WFTextActionText</string>
 			<key>Text</key>
-			<string>🗣️ 自定义规则  
+			<string>🗣️ 自定义规则
 
-如果有个性化的需求，可以在下面的文本框输入期望的自定义识别具体规则。  比如如识别到 xxx，则分类归为“xxx”，或者标签为“xxx”，或者备注内容要写成“xxx”</string>
+如果有个性化需求，可在下方文本框输入自定义识别规则。
+默认已填入备注写法规则，可根据需要修改或清空。
+示例：识别到 xxx 则分类归为"xxx"，或标签为"xxx"</string>
 		</dict>
 		<dict>
 			<key>ActionIndex</key>

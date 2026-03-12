@@ -245,6 +245,7 @@ def sign(input_path: str | Path, output_path: str | Path, mode: str = "anyone") 
 | 3C-2 替换 icost.vip | [`architect/task-3c2-replace-icost.md`](architect/task-3c2-replace-icost.md) | [`engineer/task-3c2-replace-icost.md`](engineer/task-3c2-replace-icost.md) | ✅ 初步通过 |
 | 3C-4 随机文字开关 | [`architect/task-3c4-random-text-toggle.md`](architect/task-3c4-random-text-toggle.md) | [`engineer/task-3c2-replace-icost.md`](engineer/task-3c2-replace-icost.md) | ✅ 已验收 |
 | 3C-7 多平台配置 | [`architect/task-3c7-multi-platform-config.md`](architect/task-3c7-multi-platform-config.md) | [`engineer/task-3c5-3c7-multi-platform.md`](engineer/task-3c5-3c7-multi-platform.md) | ✅ 已验收 |
+| 3C-8 最终优化 | [`architect/task-3c8-final-optimizations.md`](architect/task-3c8-final-optimizations.md) | — | 📐 设计完成 |
 
 ### 5.1 跨任务技术经验
 
